@@ -8,6 +8,10 @@ Sau mỗi bài kiểm tra, giáo viên thường chỉ có điểm tổng. Harmo
 
 ![Màn hình phân tích lớp](docs/03-thiet-ke/giao-dien/GD8.jpg)
 
+## Bản demo trực tuyến
+
+**https://harmonia-web-production-19e276d6.up.railway.app** – dùng bộ dữ liệu mô phỏng giống `database/seed_demo.sql`. Tài khoản dùng thử được cung cấp riêng cho giảng viên.
+
 ## Chức năng chính
 
 - **Học vụ:** lớp, học sinh (nhập danh sách từ CSV), giáo viên, phân công lớp theo khoảng thời gian.
