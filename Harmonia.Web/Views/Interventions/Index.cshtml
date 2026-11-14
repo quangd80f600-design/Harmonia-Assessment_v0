@@ -1,0 +1,27 @@
+@model Harmonia.Web.ViewModels.InterventionIndexViewModel
+@{ ViewData["Title"] = "Gói can thiệp"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <h1>Gói can thiệp</h1>
+        @if (Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.WorksheetOptions>>()?.Value.Enabled == true)
+        { <p class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary" asp-controller="Worksheets" asp-action="Theories">Kho lý thuyết</a><a class="btn btn-outline-primary" asp-controller="Authoring" asp-action="Questions" asp-route-UsagePurpose="ForIntervention">Câu hỏi luyện tập</a><a class="btn btn-primary" asp-controller="Assessments" asp-action="Index">Chọn đợt đánh giá để soạn phiếu</a></p><p>Soạn cho cá nhân từ kết quả học sinh; soạn cho nhóm từ phân tích nội dung kiến thức của đợt đánh giá.</p> }
+        <p class="analysis-description">Chuẩn bị học liệu theo Subskill, giao học sinh và ghi nhận ngày phát thực tế.</p>
+        <p class="analysis-note">Giáo viên xem các gói thuộc lớp đang phụ trách; quản lý học vụ có phạm vi toàn hệ thống.</p>
+        @if (Model.CanWrite) { <a class="btn btn-outline-secondary" asp-action="Create">Tạo gói can thiệp</a> }
+        else { <p class="analysis-note">Chức năng ghi can thiệp chưa được bật.</p> }
+    </header>
+    <section class="analysis-section" aria-labelledby="packages-heading">
+        <h2 id="packages-heading">Danh sách gói</h2>
+        @if (Model.Packages.Count == 0) { <p class="analysis-empty">Chưa có gói can thiệp.</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table table-striped align-middle">
+                <thead><tr><th scope="col">Gói</th><th scope="col">Đánh giá nguồn / lớp</th><th scope="col">Trạng thái</th><th scope="col">Học liệu</th><th scope="col">Học sinh đã giao</th></tr></thead>
+                <tbody>@foreach (var p in Model.Packages)
+                {
+                    <tr><th scope="row"><a asp-action="Details" asp-route-id="@p.PackageId">@p.PackageName</a><div><a asp-controller="InterventionFollowups" asp-action="Index" asp-route-id="@p.PackageId">Theo dõi đánh giá</a></div></th><td>@p.Assessment.AssessmentName · @p.Assessment.ClassName · @p.Assessment.AssessmentDate.ToString("dd/MM/yyyy")</td><td>@(p.Status == "Draft" ? "Nháp" : p.Status == "Published" ? "Đã phát hành" : "Lưu trữ")</td><td>@if(p.WorksheetQuestionCount>0){<span>@p.WorksheetQuestionCount câu luyện · @p.WorksheetTheoryCount mục lý thuyết</span>}else{@p.ResourceCount}</td><td>@p.StudentCount</td></tr>
+                }</tbody>
+            </table></div>
+        }
+    </section>
+</div>

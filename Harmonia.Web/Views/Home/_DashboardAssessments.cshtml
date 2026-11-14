@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using Harmonia.Web.ViewModels
+<section class="dashboard-section" aria-labelledby="dashboard-assessments-title">
+    <div class="dashboard-section-title"><h2 id="dashboard-assessments-title">Đợt đánh giá gần đây</h2><a asp-controller="Assessments" asp-action="Index">Xem tất cả đợt</a></div>
+    @if(Model.RecentAssessments.Count == 0){<p class="dashboard-empty">Chưa có đợt đánh giá trong phạm vi đang chọn. Chuẩn bị lớp, phân công giáo viên và đề đã phát hành để bắt đầu.</p>}
+    <div class="dashboard-list">@foreach(var row in Model.RecentAssessments){var a=row.Assessment;<article class="dashboard-list-item"><div><h3><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@a.Id">@a.Name</a></h3><p class="small text-muted">@a.ClassName · @a.Date.ToString("dd/MM/yyyy") · @DashboardText.Status(a.Status)</p><p>@DashboardText.Completion(row.Completion)</p>@if(row.Completion is { HasStudents:true } completion){<p class="small">Đã có kết quả @completion.RecordedStudents/@completion.ExpectedStudents học sinh</p>}</div><div class="dashboard-row-actions"><a asp-controller="Assessments" asp-action="SubskillSummary" asp-route-id="@a.Id">Phân tích nội dung</a>@if(row.CanImport){<a class="btn btn-outline-primary btn-sm" asp-controller="AssessmentImports" asp-action="Index" asp-route-id="@a.Id">Nhập kết quả</a>}</div></article>}</div>
+</section>

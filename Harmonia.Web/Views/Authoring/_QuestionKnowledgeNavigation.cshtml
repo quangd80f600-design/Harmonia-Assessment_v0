@@ -1,0 +1,15 @@
+@model Harmonia.Web.ViewModels.QuestionSearch
+<div class="knowledge-navigation" data-question-navigation data-tree-url="@Url.Action("WorkspaceTaxonomy", "Authoring")" data-skills-url="@Url.Action("WorkspaceSkills", "Authoring")" data-bank-url="@Url.Action("Questions", "Authoring")" data-grade="@Model.Grade" data-unit="@Model.UnitId" data-area="@Model.AreaId" data-skill="@Model.SubskillId" data-term="@Model.Term" data-usage-purpose="@Model.UsagePurpose">
+    <button type="button" class="btn btn-outline-secondary knowledge-toggle" aria-expanded="false" aria-controls="question-knowledge">Chọn kiến thức</button>
+    <aside id="question-knowledge" class="knowledge-panel" aria-label="Lọc theo cây kiến thức">
+        <header><h2>Chọn kiến thức</h2><p>Mở nhánh để chọn bài, nhóm hoặc kỹ năng.</p></header>
+        <div class="knowledge-controls">
+            <label for="bank-grade" class="form-label">Khối</label>
+            <select id="bank-grade" class="form-select"><option value="">Tất cả các khối</option>@for (short g = 6; g <= 12; g++) { <option value="@g" selected="@(Model.Grade == g)">Khối @g</option> }</select>
+            <label for="bank-skill-search" class="form-label mt-3">Tìm kỹ năng</label><input id="bank-skill-search" type="search" class="form-control" maxlength="100" placeholder="Tên hoặc mã kỹ năng" />
+            <a class="workspace-link d-block" asp-controller="Authoring" asp-action="Questions" asp-route-grade="@Model.Grade" asp-route-term="@Model.Term" asp-route-usagePurpose="@Model.UsagePurpose">Xem toàn bộ câu hỏi của khối</a>
+        </div>
+        <div class="knowledge-tree-scroll"><div id="bank-skill-results" hidden></div><div id="bank-taxonomy-tree" aria-live="polite"><p>Đang tải cây kiến thức…</p></div></div>
+        <noscript><p><a asp-controller="Authoring" asp-action="Taxonomy" asp-route-grade="@Model.Grade">Mở cây kiến thức để chọn kỹ năng</a></p></noscript>
+    </aside>
+</div>

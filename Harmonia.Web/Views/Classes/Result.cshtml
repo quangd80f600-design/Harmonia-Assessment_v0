@@ -1,0 +1,23 @@
+@model Harmonia.Web.ViewModels.RosterImportOutcome
+@{ ViewData["Title"] = "Kết quả nhập danh sách"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-action="Index">Lớp &amp; học sinh</a></li><li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Class.ClassId">Danh sách học sinh</a></li><li class="breadcrumb-item active" aria-current="page">Kết quả nhập</li></ol></nav>
+        <h1>Kết quả nhập danh sách</h1><partial name="_ClassContext" model="Model.Class" />
+    </header>
+    @if (Model.Succeeded)
+    {
+        <p class="alert alert-success" role="status">Đã tạo @Model.NewStudents hồ sơ học sinh, sử dụng @Model.ExistingStudents hồ sơ hiện có và ghi nhận @Model.Memberships lượt tham gia lớp. Thông tin của học sinh đã có được giữ nguyên.</p>
+    }
+    else if (Model.CommitUncertain)
+    {
+        <p class="alert alert-warning" role="alert">Chưa xác nhận được kết quả lưu. Kiểm tra danh sách lớp theo ngày đã nhập trước khi thử lại.</p>
+    }
+    else
+    {
+        <p class="analysis-empty">Không nhập danh sách. Không có học sinh hoặc membership được ghi một phần từ lần xác nhận này.</p>
+        <partial name="_ImportErrors" model="Model.Errors" />
+    }
+    <p class="analysis-note">Danh sách lớp được xem theo ngày. Chọn ngày có hiệu lực tương ứng nếu danh sách vừa nhập nằm trong quá khứ hoặc tương lai.</p>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Class.ClassId">Xem danh sách lớp</a> <a class="btn btn-link" asp-action="Import" asp-route-id="@Model.Class.ClassId">Nhập danh sách khác</a>
+</div>

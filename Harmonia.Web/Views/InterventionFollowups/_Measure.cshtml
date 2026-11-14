@@ -1,0 +1,13 @@
+@model Harmonia.Web.ViewModels.FollowupMeasure
+@if (Model.MissingReason is string missing)
+{
+    <strong>@missing</strong>
+    <div class="analysis-note">@Model.QuestionCount câu trong đề · tỷ lệ chưa xác định</div>
+}
+else
+{
+    <strong>@Model.CorrectCount / @Model.ResponseCount đúng · @Model.Percentage?.ToString("0.##")%</strong>
+    <div class="analysis-note">@Model.QuestionCount câu trong đề · @Model.ResponseCount câu đã ghi nhận</div>
+    @if (Model.ResponseCount < Model.QuestionCount) { <div class="analysis-note">Thiếu @(Model.QuestionCount - Model.ResponseCount) Response; không tự coi là trả lời sai.</div> }
+    @if (Model.ResponseCount < 5) { <div class="analysis-note">Ít câu làm cơ sở; thận trọng khi nhận định.</div> }
+}

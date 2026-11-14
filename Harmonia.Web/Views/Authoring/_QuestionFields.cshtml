@@ -1,0 +1,14 @@
+@model Harmonia.Web.ViewModels.QuestionCreatePage
+        <div class="mb-3"><label asp-for="Input.UsagePurpose" class="form-label">Mục đích sử dụng</label><select asp-for="Input.UsagePurpose" class="form-select" required><option value="ForTest">Dùng trong đề kiểm tra</option><option value="ForIntervention">Luyện tập can thiệp</option></select><p class="form-text">Chỉ câu Đánh giá được chọn vào đề kiểm tra.</p></div>
+        <div class="mb-3"><label asp-for="Input.SubskillId" class="form-label">Nội dung kiến thức mục tiêu</label><select asp-for="Input.SubskillId" class="form-select" required><option value="">Chọn kỹ năng</option>@foreach (var s in Model.Subskills) { <option value="@s.Id">Khối @s.Grade · @s.Caption</option> }</select><a asp-action="Taxonomy">Xem cây kiến thức</a></div>
+        <div class="mb-3"><label asp-for="Input.QuestionCode" class="form-label">Mã câu hỏi</label><input asp-for="Input.QuestionCode" class="form-control" maxlength="50" required /></div>
+        <div class="mb-3"><label asp-for="Input.QuestionText" class="form-label">Nội dung</label><textarea asp-for="Input.QuestionText" class="form-control" rows="4" maxlength="10000" required></textarea></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><label asp-for="Input.OptionA" class="form-label">Lựa chọn A</label><textarea asp-for="Input.OptionA" class="form-control" rows="2" maxlength="5000" required></textarea></div>
+            <div class="col-md-6"><label asp-for="Input.OptionB" class="form-label">Lựa chọn B</label><textarea asp-for="Input.OptionB" class="form-control" rows="2" maxlength="5000" required></textarea></div>
+            <div class="col-md-6"><label asp-for="Input.OptionC" class="form-label">Lựa chọn C</label><textarea asp-for="Input.OptionC" class="form-control" rows="2" maxlength="5000" required></textarea></div>
+            <div class="col-md-6"><label asp-for="Input.OptionD" class="form-label">Lựa chọn D</label><textarea asp-for="Input.OptionD" class="form-control" rows="2" maxlength="5000" required></textarea></div>
+            <div class="col-md-6"><label asp-for="Input.AnswerKey" class="form-label">Đáp án đúng</label><select asp-for="Input.AnswerKey" class="form-select">@foreach (var key in new[] { "A", "B", "C", "D" }) { <option value="@key">@key</option> }</select></div>
+            <div class="col-md-6"><label asp-for="Input.DifficultyLevel" class="form-label">Mức độ nhận thức</label><select asp-for="Input.DifficultyLevel" class="form-select"><option value="1">1 — Nhận biết</option><option value="2">2 — Thông hiểu</option><option value="3">3 — Vận dụng</option></select></div>
+        </div>
+        <div class="mb-3"><label asp-for="Input.Explanation" class="form-label">Giải thích (tùy chọn)</label><textarea asp-for="Input.Explanation" class="form-control" rows="3" maxlength="10000"></textarea></div>

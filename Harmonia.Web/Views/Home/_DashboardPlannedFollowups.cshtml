@@ -1,0 +1,15 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using Harmonia.Web.ViewModels
+<section class="dashboard-calendar-group" aria-labelledby="dashboard-planned-title">
+    <h3 id="dashboard-planned-title">Ngày dự kiến đánh giá lại</h3>
+    <p class="text-muted small">Lời nhắc chung cho đợt đánh giá nguồn, không tự tạo đợt đánh giá lại. Sửa hoặc xóa ngày dự kiến khi kế hoạch thay đổi.</p>
+    @if(Model.PlannedFollowups.Count == 0){<p class="dashboard-empty">Chưa có ngày dự kiến đánh giá lại trong phạm vi đang chọn.</p><a asp-controller="Assessments" asp-action="Index">Xem danh sách đợt đánh giá</a>}
+    <div class="dashboard-list">
+    @foreach(var item in Model.PlannedFollowups){
+        <article class="dashboard-list-item" data-planned-assessment="@item.AssessmentId">
+            <div><p class="dashboard-eyebrow">@AssessmentFollowupPlanRules.Label(item.PlannedDate, Model.Today) · @item.PlannedDate.ToString("dd/MM/yyyy")</p><h3>@item.AssessmentName</h3><p>@item.ClassName · Ngày đánh giá ban đầu: @item.AssessmentDate.ToString("dd/MM/yyyy")</p></div>
+            <div class="dashboard-row-actions"><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@item.AssessmentId">Mở đợt đánh giá</a>@if(item.CanEdit){<a asp-controller="AssessmentFollowupPlans" asp-action="Edit" asp-route-id="@item.AssessmentId">Sửa ngày dự kiến</a>}</div>
+        </article>
+    }
+    </div>
+</section>

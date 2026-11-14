@@ -1,0 +1,119 @@
+
+@model IReadOnlyList<Harmonia.Web.ViewModels.AssessmentListItemViewModel>
+
+@{
+    ViewData["Title"] = "Danh sách đợt đánh giá";
+    var creation = ViewData["AssessmentCreation"] as Harmonia.Web.ViewModels.AssessmentCreationGuidanceViewModel;
+}
+
+<div class="assessment-index">
+    <h1>Đợt đánh giá</h1>
+    <p>Danh sách các đợt đánh giá</p>
+    @if (creation is not null)
+    {
+        <p><a class="btn btn-primary" asp-controller="Authoring" asp-action="CreateAssessment" data-create-assessment>Tạo đợt đánh giá</a></p>
+        @if (creation.NeedsPreparation)
+        {
+            <section class="alert alert-info" aria-labelledby="assessment-preparation-title" data-assessment-preparation>
+                <h3 class="h6" id="assessment-preparation-title">Chuẩn bị trước khi tạo đợt đánh giá</h3>
+                <ul class="mb-2">
+                    @if (!creation.HasClasses)
+                    {
+                        <li data-missing="class">
+                            @if (creation.IsManager)
+                            {
+                                <span>Chưa có lớp đang hoạt động. </span><a asp-controller="Classes" asp-action="Create">Tạo lớp</a><span> trước khi tổ chức đánh giá.</span>
+                            }
+                            else
+                            {
+                                <span>Chưa có lớp đang hoạt động trong phạm vi của bạn. Nhờ quản lý học vụ tạo lớp hoặc phân công bạn vào lớp.</span>
+                            }
+                        </li>
+                    }
+                    @if (!creation.HasAssignments)
+                    {
+                        <li data-missing="assignment">
+                            @if (creation.IsManager)
+                            {
+                                <span>Chưa có phân công phù hợp trong danh sách lớp và giáo viên đang hoạt động. </span><a asp-controller="Teachers" asp-action="Index">Phân công giáo viên vào lớp</a><span>, có hiệu lực tại ngày dự định đánh giá.</span>
+                            }
+                            else
+                            {
+                                <span>Nhờ quản lý học vụ kiểm tra phân công giáo viên–lớp có hiệu lực tại ngày dự định đánh giá.</span>
+                            }
+                        </li>
+                    }
+                    @if (!creation.HasPublishedTests)
+                    {
+                        <li data-missing="test">Chưa có đề đã phát hành. <a asp-controller="Authoring" asp-action="Tests">Tạo và phát hành đề</a> trước khi chọn đề cho đợt đánh giá.</li>
+                    }
+                </ul>
+                <p class="mb-0 small">Bạn vẫn có thể mở biểu mẫu. Khi lưu, hệ thống sẽ kiểm tra lớp, phân công tại ngày đánh giá và đề phù hợp.</p>
+            </section>
+        }
+    }
+    <p class="text-muted small">Trạng thái đợt mô tả việc tổ chức đánh giá. Tiến độ nhập kết quả được tính riêng theo học sinh thuộc lớp tại ngày đánh giá.</p>
+
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Tên đợt đánh giá</th>
+                <th>Ngày đánh giá</th>
+                <th>Trạng thái đợt đánh giá</th>
+                <th>Tiến độ nhập kết quả</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.AssessmentName</td>
+                    <td>@item.AssessmentDate.ToString("dd/MM/yyyy")</td>
+                    <td>@(item.Status switch { "Draft" => "Nháp", "Open" => "Đang mở", "Completed" => "Đã kết thúc đánh giá", "Cancelled" => "Đã hủy", _ => item.Status })</td>
+                    <td>
+                        @if (item.ResultCompletion is { } completion)
+                        {
+                            <span>@completion.RecordedStudents/@completion.ExpectedStudents — @(completion.IsComplete ? "Đã đủ" : completion.HasStudents ? $"Thiếu {completion.MissingStudents}" : "Chưa có học sinh")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa xác định được tiến độ</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-outline-secondary btn-sm" asp-action="Overview" asp-route-id="@item.AssessmentId">Xem kết quả</a>
+                            @if (item.ResultCompletion?.IsComplete == true)
+                            {
+                                <span class="align-self-center text-muted">Đã nhập đủ</span>
+                            }
+                            else if (item.CanImportSupplement)
+                            {
+                                <a class="btn btn-outline-secondary btn-sm" asp-controller="AssessmentImports" asp-action="Index" asp-route-id="@item.AssessmentId">Nhập kết quả CSV</a>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Nhập kết quả CSV</button>
+                            }
+                        </div>
+                        @if (item.ResultCompletion?.IsComplete != true && !item.CanImportSupplement)
+                        {
+                            <small class="d-block text-muted mt-1">@(item.Import?.BlockReason ?? "Assessment không còn khả dụng để nhập.")</small>
+                        }
+                        else if (item.CanImportSupplement && item.Status == "Completed")
+                        {
+                            <small class="d-block text-muted mt-1">Chỉ nhập kết quả cho học sinh chưa có kết quả trong đợt này; không ghi đè kết quả đã lưu.</small>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted">Chưa có đợt đánh giá.</td></tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>

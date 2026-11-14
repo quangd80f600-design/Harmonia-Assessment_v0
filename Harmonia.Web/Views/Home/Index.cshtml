@@ -1,0 +1,40 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@{ ViewData["Title"] = Model.IsManager ? "Tổng quan học thuật" : "Tổng quan giảng dạy"; }
+<link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+<div class="dashboard-page">
+    <header class="dashboard-header"><div><p class="dashboard-eyebrow">HARMONIA ASSESSMENT</p><h1>@ViewData["Title"]</h1><p>@(Model.IsManager ? "Công việc và kết quả trong phạm vi quản lý." : "Công việc và kết quả cần quan tâm trong lớp của bạn.")</p></div><time datetime="@Model.Today.ToString("yyyy-MM-dd")">@Model.Today.ToString("dd/MM/yyyy")</time></header>
+    <form method="get" asp-controller="Home" asp-action="Index" class="dashboard-filter" id="dashboard-filter">
+        <div><label for="dashboard-class-search">Tìm lớp học</label><input id="dashboard-class-search" class="form-control mb-2" type="search" placeholder="Nhập tên lớp hoặc năm học" /><label for="dashboard-class">Lớp học</label><select id="dashboard-class" name="classId" class="form-select"><option value="">Tất cả lớp trong phạm vi của bạn</option>@foreach(var c in Model.Classes){<option value="@c.Id" selected="@(Model.Filter.ClassId == c.Id)">@c.Name</option>}</select></div>
+        <div><label for="dashboard-assessment">Đợt đánh giá nguồn</label><select id="dashboard-assessment" name="assessmentId" class="form-select"><option value="">Đợt gần nhất</option>@foreach(var a in Model.AssessmentOptions){<option value="@a.Id" selected="@(Model.Filter.AssessmentId == a.Id)">@a.Name · @a.ClassName · @a.Date.ToString("dd/MM/yyyy")</option>}</select></div>
+        <button type="submit" class="btn btn-primary">Áp dụng</button>
+        <a asp-controller="Home" asp-action="Index">Bỏ bộ lọc</a>
+        <p class="small text-muted">Khi chọn lớp khác, chọn “Đợt gần nhất” để xem đợt của lớp đó. Lời nhắc theo lớp đang chọn; phần phân tích theo đợt đánh giá nguồn.</p>
+    </form>
+    <nav class="dashboard-actions" aria-label="Thao tác nhanh">
+        @if(Model.Creation is not null){<a class="btn btn-primary" asp-controller="Authoring" asp-action="CreateTest">Tạo đề kiểm tra</a><a class="btn btn-outline-primary" asp-controller="Authoring" asp-action="CreateAssessment">Tạo đợt đánh giá</a>}
+        @if(Model.SelectedCanImport && Model.SelectedAssessment is not null){<a class="btn btn-outline-primary" asp-controller="AssessmentImports" asp-action="Index" asp-route-id="@Model.SelectedAssessment.Id">Nhập kết quả đợt đang chọn</a>}
+        @if(Model.IsManager){<a class="btn btn-outline-secondary" asp-controller="Teachers" asp-action="Index">Giáo viên &amp; phân công</a>}
+    </nav>
+    @if(Model.Creation is { NeedsPreparation: true } creation){
+        <details class="dashboard-preparation"><summary>Chuẩn bị dữ liệu trước khi tạo đợt đánh giá</summary><div class="pt-3">
+            <ul class="mb-0">
+            @if(!creation.HasClasses){<li>Chưa có lớp đang hoạt động trong phạm vi của bạn. @(Model.IsManager ? "Hãy tạo lớp học." : "Nhờ quản lý học thuật kiểm tra lớp và phân công.")</li>}
+            @if(!creation.HasAssignments){<li>Cần phân công giáo viên vào lớp có hiệu lực tại ngày dự định đánh giá.</li>}
+            @if(!creation.HasPublishedTests){<li>Cần tạo và phát hành đề kiểm tra trước khi tạo đợt đánh giá.</li>}
+            </ul><a asp-controller="Assessments" asp-action="Index">Xem hướng dẫn và các đợt đánh giá</a>
+        </div></details>
+    }
+    <partial name="_DashboardWork" model="Model" />
+    <partial name="_DashboardAnalysis" model="Model" />
+    <section class="dashboard-section dashboard-calendar" aria-labelledby="dashboard-calendar-title">
+        <div class="dashboard-section-title"><h2 id="dashboard-calendar-title"><span class="dashboard-step">03</span> Lịch đánh giá lại</h2><partial name="_NavigationIcon" model='@("assessments")' /></div>
+        <partial name="_DashboardPlannedFollowups" model="Model" />
+        <partial name="_DashboardFollowups" model="Model" />
+    </section>
+    <details class="dashboard-reference">
+        <summary>@(Model.IsManager ? "Tra cứu lớp và các đợt đánh giá gần đây" : "Xem lớp của tôi và các đợt đánh giá gần đây")</summary>
+        <div class="dashboard-reference-body"><partial name="_DashboardClasses" model="Model" /><partial name="_DashboardAssessments" model="Model" /></div>
+    </details>
+    <details class="dashboard-reference"><summary>Xem các gói can thiệp của đợt đang chọn</summary><div class="dashboard-reference-body"><partial name="_DashboardInterventions" model="Model" /></div></details>
+</div>
+@section Scripts { <script src="~/js/dashboard.js" asp-append-version="true"></script> }

@@ -1,0 +1,9 @@
+@{ ViewData["Title"] = "Câu hỏi và đề đánh giá"; }
+<div class="analysis-page">
+    <header class="analysis-header"><h1>Câu hỏi và đề đánh giá</h1><p class="analysis-description">Chọn nội dung kiến thức, chuẩn bị câu hỏi, soạn đề kiểm tra và tạo đợt đánh giá để nhập kết quả.</p>
+        <p class="analysis-note">Lớp, hồ sơ giáo viên và phân công do quản lý học vụ chuẩn bị. Quyền soạn đề và tạo đợt đánh giá được kiểm tra theo tài khoản. Không tạo hoặc sửa taxonomy ở đây.</p></header>
+    <section class="analysis-section"><h2>01. Chọn kiến thức</h2><p>Xem Bài học → Nhóm kiến thức → Kỹ năng trên dữ liệu hiện có.</p><a asp-action="Taxonomy" class="btn btn-outline-secondary">Cây kiến thức</a></section>
+    <section class="analysis-section"><h2>02. Chuẩn bị câu hỏi</h2><p>Tạo câu hỏi trắc nghiệm gồm bốn lựa chọn A–D, một đáp án đúng và nội dung kiến thức phù hợp. Giáo viên tạo bản sao khi cần điều chỉnh; chỉ quản lý học thuật được sửa câu chưa thuộc đề nào.</p><a asp-action="Questions" class="btn btn-outline-secondary">Ngân hàng câu hỏi</a> <a asp-action="CreateQuestion" class="btn btn-link">Tạo câu hỏi</a></section>
+    <section class="analysis-section"><h2>03. Soạn và phát hành đề</h2><p>Chọn câu, đánh số và lưu snapshot. Đề cũ được giữ nguyên, bản sao có ID mới.</p><a asp-action="Tests" class="btn btn-outline-secondary">Danh sách đề</a> <a asp-action="CreateTest" class="btn btn-link">Tạo đề</a></section>
+    <section class="analysis-section"><h2>04. Tạo đợt đánh giá</h2><p>Chọn lớp, đề đã phát hành, giáo viên được phân công và ngày đánh giá, sau đó nhập kết quả CSV.</p><a asp-action="CreateAssessment" class="btn btn-outline-secondary">Tạo đợt đánh giá</a></section>
+</div>

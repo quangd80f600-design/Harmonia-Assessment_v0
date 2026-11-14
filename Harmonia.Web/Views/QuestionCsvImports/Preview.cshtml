@@ -1,0 +1,29 @@
+@model Harmonia.Web.ViewModels.QuestionCsvPreview
+@{ ViewData["Title"] = "Xem trước câu hỏi CSV"; }
+<div class="analysis-page">
+    <header class="analysis-header"><a asp-action="Index">Nhập lại file</a><h1>2. Kiểm tra câu hỏi trước khi nhập</h1>
+        <p>@Model.Rows.Count câu mới · Chưa lưu vào ngân hàng. Xem trước có hiệu lực 15 phút, đến @Model.ExpiresAt.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm:ss dd/MM/yyyy") (giờ Việt Nam).</p>
+        <p>Độ khó: 1 · Giải thích: để trống · Trạng thái: Hoạt động. Tất cả câu được thêm vào ngân hàng dùng chung.</p>
+        <p>Mục đích của toàn file: <strong>@Harmonia.Web.Models.QuestionPurposes.Label(Model.UsagePurpose)</strong>. Muốn đổi mục đích, hãy tải lại file.</p>
+    </header>
+    @if (ViewData["ConfirmError"] is string error) { <p class="alert alert-danger" role="alert">@error</p> }
+    @foreach (var row in Model.Rows)
+    {
+        var q = row.Question;
+        <article class="analysis-section">
+            <h2 class="h5">Dòng @q.Line — @q.QuestionCode</h2>
+            <p><code>@row.Skill.Code</code> — @row.Skill.Name · Khối @row.Skill.Grade / @row.Skill.UnitName / @row.Skill.AreaName</p>
+            <p class="text-break" style="white-space: pre-wrap">@q.QuestionText</p>
+            <ul class="text-break" style="white-space: pre-wrap"><li>A. @q.OptionA</li><li>B. @q.OptionB</li><li>C. @q.OptionC</li><li>D. @q.OptionD</li></ul>
+            <p><strong>Đáp án: @q.AnswerKey</strong></p>
+        </article>
+    }
+    <section class="analysis-section">
+        <form asp-action="Confirm" method="post">
+            <input type="hidden" name="token" value="@Model.Token" />
+            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="confirmed" value="true" id="confirmed" required /><label class="form-check-label" for="confirmed">Tôi đã kiểm tra nội dung, đáp án và kỹ năng của toàn bộ câu hỏi.</label></div>
+            <button class="btn btn-primary" type="submit">Xác nhận nhập @Model.Rows.Count câu</button>
+            <a class="btn btn-link" asp-action="Index">Hủy / Chọn file khác</a>
+        </form>
+    </section>
+</div>

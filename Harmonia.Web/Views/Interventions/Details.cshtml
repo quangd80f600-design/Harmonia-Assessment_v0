@@ -1,0 +1,108 @@
+@model Harmonia.Web.ViewModels.InterventionDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết gói can thiệp";
+    var suggested = long.TryParse(TempData["WorksheetStudentId"] as string, out var sourceStudent)
+        && Model.HasInternalWorksheet && Model.CanAssign ? Model.Candidates.FirstOrDefault(s=>s.StudentId==sourceStudent) : null;
+    var commentsEnabled = Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.ParentCommentOptions>>()?.Value.Enabled == true;
+}
+<div class="analysis-page">
+    <header class="analysis-header">
+        <a asp-action="Index">Gói can thiệp</a><h1>@Model.PackageName</h1>
+        <p class="analysis-description">@Model.Assessment.AssessmentName · @Model.Assessment.ClassName · @Model.Assessment.AssessmentDate.ToString("dd/MM/yyyy")</p>
+        <p>Trạng thái: <strong>@(Model.Status == "Draft" ? "Nháp" : Model.Status == "Published" ? "Đã phát hành" : "Lưu trữ")</strong></p>
+        @if (!string.IsNullOrWhiteSpace(Model.Instructions)) { <p class="text-break" style="white-space: pre-wrap">@Model.Instructions</p> }
+        <p><a asp-controller="InterventionFollowups" asp-action="Index" asp-route-id="@Model.PackageId">Theo dõi đánh giá lại</a></p>
+        <p class="analysis-note">Mỗi học sinh được giao toàn bộ học liệu và nội dung kiến thức mục tiêu của gói. Nếu cần nội dung khác nhau, hãy tạo gói riêng. Việc giao gói trên hệ thống không xác nhận học liệu đã được phát hoặc gửi thực tế.</p>
+        @if (TempData["InterventionMessage"] is string message) { <p class="alert alert-success" role="status">@message</p> }
+        @if (TempData["WorksheetGroupError"] is string groupError) { <p class="alert alert-warning" role="alert">@groupError</p> }
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        @if (Model.HasInternalWorksheet)
+        {
+            <p><a class="btn btn-outline-primary" asp-controller="Worksheets" asp-action="Print" asp-route-id="@Model.PackageId">Xem / In phiếu chung (không tên)</a>
+            <a asp-controller="Worksheets" asp-action="Answers" asp-route-id="@Model.PackageId">Đáp án dành cho giáo viên</a></p>
+            <p>Bước tiếp theo: kiểm tra nội dung → xác nhận giao → chọn “In phiếu có tên” dưới từng học sinh. Bản chung không có tên người nhận.</p>
+            @if (Model.Status == "Draft" && Model.Assignments.Count == 0 && Model.CanWrite)
+            { <p class="alert alert-info">Phiếu đang là bản nháp, chưa giao cho học sinh. <a href="#assign-heading">Kiểm tra người nhận và xác nhận giao phiếu</a> trước khi hoàn tất báo cáo phụ huynh.</p> }
+            @if (Model.Status == "Draft" && Model.CanWrite)
+            {
+                <form asp-controller="Worksheets" asp-action="Edit" asp-route-id="@Model.PackageId" method="get">
+                    <label for="worksheet-student">Sửa phiếu theo kết quả học sinh</label>
+                    <select name="studentId" id="worksheet-student" class="form-select" required><option value="">Chọn học sinh làm cơ sở soạn phiếu</option>
+                    @foreach(var candidate in Model.Candidates){<option value="@candidate.StudentId">@candidate.StudentCode · @candidate.FullName</option>}</select>
+                    <button class="btn btn-outline-secondary mt-2">Mở phiếu nháp để sửa</button>
+                </form>
+            }
+        }
+    </header>
+    <section class="analysis-section" aria-labelledby="resources-heading">
+        <h2 id="resources-heading">01. Học liệu và Subskill mục tiêu</h2>
+        @if (Model.Resources.Count == 0 && !Model.HasInternalWorksheet) { <p class="analysis-empty">Chưa có học liệu trong gói.</p> }
+        else
+        {
+            <ol>@foreach (var r in Model.Resources)
+            {
+                <li class="mb-3">
+                    @if (r.SafeUrl is string url) { <a href="@url" target="_blank" rel="noopener noreferrer">@r.ResourceName</a> }
+                    else { <strong>@r.ResourceName</strong><span> · URL không hợp lệ</span> }
+                    <div>@r.SubskillCode · @r.SubskillName · @(r.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</div>
+                    <p class="text-break">@r.Description</p>
+                </li>
+            }</ol>
+        }
+        @if (Model.CanAttach)
+        {
+            <form asp-action="Resources" asp-route-id="@Model.PackageId" method="post">
+                <fieldset><legend class="h5">Chọn học liệu từ kho</legend><p class="analysis-note">Chỉ hiển thị học liệu đang hoạt động có Subskill thuộc snapshot bài đánh giá nguồn. Mỗi lần tối đa 200 mục.</p>
+                    @if (Model.AvailableResources.Count == 0) { <p>Không còn học liệu phù hợp để thêm.</p> }
+                    @foreach (var r in Model.AvailableResources)
+                    {
+                        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="Ids" value="@r.ResourceId" id="resource-@r.ResourceId" disabled="@(r.SafeUrl is null)" /><label class="form-check-label" for="resource-@r.ResourceId">@r.ResourceName · @r.SubskillCode · @r.SubskillName @(r.SafeUrl is null ? "(URL không hợp lệ)" : "")</label></div>
+                    }
+                </fieldset>
+                @if (Model.AvailableResources.Any(r => r.SafeUrl is not null)) { <button type="submit" class="btn btn-outline-secondary mt-2">Thêm học liệu đã chọn</button> }
+            </form>
+        }
+        else { <p class="analysis-note">Học liệu được khóa sau lần giao đầu tiên hoặc khi gói không còn là nháp. Muốn đổi nội dung, tạo gói mới.</p> }
+    </section>
+    <section class="analysis-section" aria-labelledby="assign-heading">
+        <h2 id="assign-heading">02. Giao gói cho học sinh</h2>
+        <p class="analysis-note">Danh sách gồm học sinh thuộc lớp vào ngày đánh giá ban đầu, kể cả học sinh chưa có kết quả. Bạn chủ động chọn người nhận gói; hệ thống không tự chọn theo điểm. Mỗi lần chọn tối đa 200 học sinh.</p>
+        @if (Model.CanAssign)
+        {
+            <form asp-action="Students" asp-route-id="@Model.PackageId" method="post">
+                @if(suggested is not null) { <p class="alert alert-info">Phiếu vừa được soạn theo kết quả của <strong>@suggested.FullName</strong>. Học sinh này được chọn sẵn bên dưới; hãy kiểm tra rồi bấm giao phiếu. Lưu nháp chưa phải là giao phiếu.</p> }
+                <fieldset><legend class="h5">Học sinh chưa được giao</legend>
+                    @if (Model.Candidates.Count == 0) { <p>Không còn học sinh hợp lệ chưa được giao.</p> }
+                    @foreach (var s in Model.Candidates)
+                    {
+                        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="Ids" value="@s.StudentId" id="student-@s.StudentId" checked="@(suggested?.StudentId == s.StudentId)" /><label class="form-check-label" for="student-@s.StudentId">@s.StudentCode · @s.FullName</label></div>
+                    }
+                </fieldset>
+                @if (Model.Candidates.Count > 0) { <p>Giao lần đầu sẽ phát hành gói và khóa danh sách học liệu.</p><button type="submit" class="btn btn-outline-secondary">Giao toàn bộ gói cho học sinh đã chọn</button> }
+            </form>
+        }
+        else { <p class="analysis-empty">Chưa thể giao: cần học liệu hợp lệ; gói và đợt đánh giá nguồn phải còn được phép ghi.</p> }
+    </section>
+    <section class="analysis-section" aria-labelledby="assigned-heading">
+        <h2 id="assigned-heading">03. Học sinh đã được giao (@Model.Assignments.Count)</h2>
+        @if (Model.Assignments.Count == 0) { <p class="analysis-empty">Chưa giao gói cho học sinh.</p> }
+        @foreach (var s in Model.Assignments)
+        {
+            <article class="border rounded p-3 mb-3" aria-labelledby="assigned-@s.AssignmentId">
+                <h3 class="h5" id="assigned-@s.AssignmentId">@s.StudentCode · @s.FullName</h3>
+                @if (Model.HasInternalWorksheet) { <p><a asp-controller="Worksheets" asp-action="Print" asp-route-id="@Model.PackageId" asp-route-studentId="@s.StudentId">In phiếu có tên — @s.FullName</a></p> }
+                @if(commentsEnabled) { <p><a asp-route="StudentComment" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@s.StudentId">Tiếp tục soạn báo cáo học sinh</a></p> }
+                @if (Model.CanWrite && Model.Status != "Archived")
+                {
+                    <form asp-action="Delivery" asp-route-id="@Model.PackageId" asp-route-assignmentId="@s.AssignmentId" method="post">
+                        <input type="hidden" name="ExpectedVersion" value="@s.Version" />
+                        <div class="mb-2"><label class="form-label" for="delivery-@s.AssignmentId">Ngày thực tế phát/gửi</label><input class="form-control" id="delivery-@s.AssignmentId" name="DeliveredDate" type="date" value="@s.DeliveredDate?.ToString("yyyy-MM-dd")" min="@Model.Assessment.AssessmentDate.ToString("yyyy-MM-dd")" max="@Harmonia.Web.Services.AcademicManagementService.Today.ToString("yyyy-MM-dd")" /><p class="analysis-note">Chỉ nhập ngày đã phát hoặc gửi học liệu thực tế. Để trống nếu chưa phát hoặc chưa xác định được ngày; không nhập ngày dự kiến.</p></div>
+                        <div class="mb-2"><label class="form-label" for="note-@s.AssignmentId">Ghi chú nội bộ (không đưa vào báo cáo phụ huynh)</label><textarea class="form-control" id="note-@s.AssignmentId" name="TeacherNote" maxlength="4000" rows="3">@s.TeacherNote</textarea></div>
+                        <button type="submit" class="btn btn-outline-secondary">Lưu ngày phát và ghi chú</button>
+                    </form>
+                }
+                else { <p>Ngày phát: @(s.DeliveredDate?.ToString("dd/MM/yyyy") ?? "Chưa ghi nhận")</p><p class="text-break">@s.TeacherNote</p> }
+            </article>
+        }
+    </section>
+</div>

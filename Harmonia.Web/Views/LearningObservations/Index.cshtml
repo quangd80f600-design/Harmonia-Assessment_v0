@@ -1,0 +1,100 @@
+@model Harmonia.Web.ViewModels.LearningObservationPage
+@using Harmonia.Web.ViewModels
+@{ ViewData["Title"] = "Ghi nhận quá trình học tập"; }
+<div class="analysis-page observation-page" data-observation-page>
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Classes" asp-action="Index">Lớp học</a></li>
+            @if (Model.ClassId.HasValue)
+            { <li class="breadcrumb-item"><a asp-controller="Classes" asp-action="Details" asp-route-id="@Model.ClassId">@Model.Classes.Single(c => c.Id == Model.ClassId).Name</a></li> }
+            <li class="breadcrumb-item active" aria-current="page">Ghi nhận quá trình học tập</li>
+        </ol></nav>
+        <h1>Ghi nhận quá trình học tập</h1>
+        <p class="analysis-description">Ghi nhận những biểu hiện đã quan sát được trong giai đoạn; không suy ra thái độ từ điểm số.</p>
+        <p class="analysis-note">Chưa có thông tin thì giữ “Chưa đủ thông tin”. Các ghi nhận ở đây chưa tự đưa vào báo cáo phụ huynh.</p>
+    </header>
+    @if (TempData["ObservationMessage"] is string message) { <p class="alert alert-success" role="status">@message</p> }
+    @foreach (var error in Model.Errors) { <p class="alert alert-warning" role="alert">@error</p> }
+    <section class="analysis-section" aria-labelledby="observation-filter-title">
+        <h2 id="observation-filter-title">Chọn lớp và giai đoạn</h2>
+        @if (Model.Classes.Count == 0) { <p class="analysis-empty">Chưa có lớp trong phạm vi của bạn. Liên hệ quản lý học thuật để kiểm tra phân công.</p> }
+        else
+        {
+            <form method="get" asp-action="Index" class="observation-filters">
+                <div><label for="observation-class" class="form-label">Lớp học</label><select id="observation-class" name="classId" class="form-select" required><option value="">Chọn lớp học</option>
+                    @foreach (var c in Model.Classes) { <option value="@c.Id" selected="@(c.Id == Model.ClassId)">@c.Name</option> }
+                </select></div>
+                <div><label for="observation-start" class="form-label">Từ ngày</label><input id="observation-start" type="date" name="periodStart" class="form-control" value="@Model.PeriodStart.ToString("yyyy-MM-dd")" required /></div>
+                <div><label for="observation-end" class="form-label">Đến hết ngày</label><input id="observation-end" type="date" name="periodEnd" class="form-control" value="@Model.PeriodEnd.ToString("yyyy-MM-dd")" required /></div>
+                @if (Model.Authors.Count > 0)
+                {
+                    <div><label for="observation-author" class="form-label">Ghi nhận của</label><select id="observation-author" name="authorId" class="form-select">
+                        @foreach (var a in Model.Authors) { <option value="@a.Id" selected="@(a.Id == Model.AuthorId)">@a.Name</option> }
+                    </select></div>
+                }
+                <button class="btn btn-outline-primary" type="submit">Xem danh sách</button>
+            </form>
+        }
+    </section>
+    <details class="analysis-section observation-guide"><summary>Cách chọn các tiêu chí</summary>
+        <p><strong>Hoàn thành nhiệm vụ:</strong> Đầy đủ = hoàn thành các nhiệm vụ được ghi nhận; Một phần = còn nhiệm vụ chưa hoàn thành; Chưa hoàn thành = chưa hoàn thành nhiệm vụ nào được ghi nhận.</p>
+        <p><strong>Tham gia hoạt động:</strong> Chủ động = tự tham gia trả lời, viết hoặc thực hiện phần việc; Khi được hướng dẫn = tham gia sau hướng dẫn/nhắc; Còn hạn chế = ít thực hiện dù đã được tạo cơ hội và hướng dẫn. Ít phát biểu không tự đồng nghĩa ít tham gia.</p>
+        <p><strong>Chuẩn bị bài và học liệu:</strong> Đầy đủ / Một phần / Chưa chuẩn bị theo yêu cầu thực tế đã giao.</p>
+        <p><strong>Hợp tác nhóm:</strong> Phối hợp được = thực hiện phần việc và phối hợp với thành viên; Cần hướng dẫn = cần hỗ trợ để phân chia hoặc thực hiện phần việc. Không có hoạt động nhóm thì giữ “Chưa đủ thông tin”.</p>
+    </details>
+    @if (Model.ClassId.HasValue)
+    {
+        <section class="analysis-section" aria-labelledby="observation-roster-title">
+            <h2 id="observation-roster-title">Danh sách ghi nhận</h2>
+            @if (!Model.AssignmentCoversPeriod && Model.Students.Count > 0)
+            { <p class="alert alert-info">Bạn có thể xem dữ liệu của lớp, nhưng chỉ ghi nhận trong giai đoạn được phân công phụ trách. Hãy chọn khoảng phù hợp.</p> }
+            @if (Model.Students.Count == 0)
+            { <p class="analysis-empty">Không có học sinh trên trang này trong giai đoạn đã chọn. Kiểm tra thời gian tham gia lớp hoặc quay về trang đầu.</p> }
+            else
+            {
+                <p>@Model.StudentCount học sinh có thời gian tham gia lớp trong giai đoạn. Chọn các dòng cần lưu; mỗi lần lưu tối đa 40 học sinh trên trang này.</p>
+                <form method="post" asp-action="Save" asp-route-classId="@Model.ClassId" data-observation-form>
+                    <input type="hidden" name="PeriodStart" value="@Model.PeriodStart.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="PeriodEnd" value="@Model.PeriodEnd.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="AuthorId" value="@Model.AuthorId" />
+                    <input type="hidden" name="Page" value="@Model.Page" />
+                    <div class="observation-grid" role="region" aria-labelledby="observation-roster-title" tabindex="0">
+                    <table class="table align-middle"><thead><tr><th scope="col">Chọn lưu</th><th scope="col">Học sinh</th><th scope="col">Hoàn thành nhiệm vụ</th><th scope="col">Tham gia hoạt động</th><th scope="col">Chuẩn bị bài và học liệu</th><th scope="col">Hợp tác nhóm</th><th scope="col">Ghi nhận</th></tr></thead><tbody>
+                    @for (var i = 0; i < Model.Students.Count; i++)
+                    {
+                        var student = Model.Students[i]; var input = student.Input; var prefix = $"Rows[{i}]";
+                        <tr data-student-id="@student.StudentId" data-editable="@(student.CanEdit ? "true" : "false")">
+                            <td><input type="checkbox" class="form-check-input observation-save-row" name="@(prefix + ".Selected")" value="true" checked="@input.Selected" disabled="@(!student.CanEdit)" aria-label="Lưu ghi nhận của @student.Name" />
+                                <input type="hidden" name="@(prefix + ".StudentId")" value="@student.StudentId" />
+                                <input type="hidden" name="@(prefix + ".ObservationId")" value="@input.ObservationId" />
+                                <input type="hidden" name="@(prefix + ".ExpectedVersion")" value="@input.ExpectedVersion" />
+                            </td>
+                            <th scope="row">@student.Name<small class="d-block skill-code">@student.Code</small></th>
+                            <td><span class="observation-caption">Hoàn thành nhiệm vụ</span><partial name="_Choice" model="@(new ObservationSelect(prefix + ".TaskCompletion", input.TaskCompletion, ObservationRubric.Task, student.CanEdit, "Hoàn thành nhiệm vụ của " + student.Name))" /></td>
+                            <td><span class="observation-caption">Tham gia hoạt động</span><partial name="_Choice" model="@(new ObservationSelect(prefix + ".Participation", input.Participation, ObservationRubric.Participation, student.CanEdit, "Tham gia hoạt động của " + student.Name))" /></td>
+                            <td><span class="observation-caption">Chuẩn bị bài và học liệu</span><partial name="_Choice" model="@(new ObservationSelect(prefix + ".Preparation", input.Preparation, ObservationRubric.Preparation, student.CanEdit, "Chuẩn bị bài của " + student.Name))" /></td>
+                            <td><span class="observation-caption">Hợp tác nhóm</span><partial name="_Choice" model="@(new ObservationSelect(prefix + ".Cooperation", input.Cooperation, ObservationRubric.Cooperation, student.CanEdit, "Hợp tác nhóm của " + student.Name))" /></td>
+                            <td>@if (!student.FullMembership) { <span>Chỉ thuộc lớp một phần giai đoạn; chọn khoảng phù hợp.</span> }
+                                else if (input.ObservationId.HasValue) { <span>Đã lưu</span><small class="d-block">@student.UpdatedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small> }
+                                else { <span>Chưa ghi nhận</span> }
+                                @if (!student.CanEdit && student.FullMembership) { <small class="d-block">Chỉ xem ở giai đoạn/người ghi đang chọn.</small> }
+                            </td>
+                        </tr>
+                    }
+                    </tbody></table></div>
+                    @if (Model.Students.Any(s => s.CanEdit))
+                    { <div class="observation-save-bar"><button type="submit" class="btn btn-primary">Lưu các dòng đã chọn</button><span data-save-count role="status">Chọn dòng cần lưu</span></div> }
+                    <noscript><p>Đánh dấu ô “Chọn lưu” cho các dòng muốn lưu trước khi bấm nút.</p></noscript>
+                </form>
+            }
+            @if (Model.Page > 1 || Model.Page < Model.TotalPages)
+            {
+                <nav aria-label="Phân trang học sinh" class="d-flex flex-wrap gap-3 mt-3"><span>Trang @Model.Page / @Model.TotalPages</span>
+                    @if (Model.Page > 1) { <a asp-action="Index" asp-route-classId="@Model.ClassId" asp-route-periodStart="@Model.PeriodStart.ToString("yyyy-MM-dd")" asp-route-periodEnd="@Model.PeriodEnd.ToString("yyyy-MM-dd")" asp-route-authorId="@Model.AuthorId" asp-route-page="1">Trang đầu</a> }
+                    @if (Model.Page < Model.TotalPages) { <a asp-action="Index" asp-route-classId="@Model.ClassId" asp-route-periodStart="@Model.PeriodStart.ToString("yyyy-MM-dd")" asp-route-periodEnd="@Model.PeriodEnd.ToString("yyyy-MM-dd")" asp-route-authorId="@Model.AuthorId" asp-route-page="@(Model.Page + 1)">Trang sau</a> }
+                </nav>
+            }
+        </section>
+    }
+</div>
+@section Scripts { <script src="~/js/learning-observations.js" asp-append-version="true"></script> }

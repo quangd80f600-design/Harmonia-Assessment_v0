@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.AcademicClassHeader
+<dl class="analysis-context">
+    <div><dt>Mã lớp</dt><dd>@Model.ClassCode</dd></div>
+    <div><dt>Lớp</dt><dd>@Model.ClassName</dd></div>
+    <div><dt>Khối / Năm học</dt><dd>@Model.Grade / @Model.AcademicYear</dd></div>
+    <div><dt>Trạng thái</dt><dd>@(Model.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</dd></div>
+</dl>

@@ -1,0 +1,26 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using Harmonia.Web.ViewModels
+@{
+    var imports = Model.RecentAssessments.Where(r => r.CanImport && r.Assessment.Date <= Model.Today
+        && r.Completion?.HasMissingResults == true).Take(3).ToArray();
+    var reminders = Model.PlannedFollowups.Where(r => r.PlannedDate >= Model.Today).Take(2).ToArray();
+    var assignmentNeeded = Model.IsManager && Model.UnassignedClasses is > 0;
+}
+<section class="dashboard-section dashboard-work" aria-labelledby="dashboard-work-title">
+    <div class="dashboard-section-title">
+        <h2 id="dashboard-work-title"><span class="dashboard-step">01</span> Công việc cần xử lý</h2>
+        <partial name="_NavigationIcon" model='@("assessments")' />
+    </div>
+    <p class="text-muted small">@(Model.IsManager ? "Theo dõi phân công và các đợt trong phạm vi quản lý." : "Tiếp tục công việc trong các lớp bạn đang phụ trách.") Các mục dưới đây lấy từ danh sách đang hiển thị, không phải tổng số công việc.</p>
+    @if(assignmentNeeded){
+        <article class="dashboard-work-item"><span class="dashboard-work-icon"><partial name="_NavigationIcon" model='@("teachers")' /></span><div><h3>Kiểm tra phân công giáo viên</h3><p>@Model.UnassignedClasses lớp đang hoạt động chưa có phân công hiện tại.</p></div><a class="btn btn-outline-primary btn-sm" asp-controller="Teachers" asp-action="Index">Xem phân công</a></article>
+    }
+    @foreach(var row in imports){
+        <article class="dashboard-work-item"><span class="dashboard-work-icon"><partial name="_NavigationIcon" model='@("assessments")' /></span><div><h3>Nhập kết quả — @row.Assessment.Name</h3><p>@row.Assessment.ClassName · Ngày đánh giá @row.Assessment.Date.ToString("dd/MM/yyyy") · Còn @row.Completion!.MissingStudents học sinh chưa có kết quả.</p></div><a class="btn btn-primary btn-sm" asp-controller="AssessmentImports" asp-action="Index" asp-route-id="@row.Assessment.Id">Nhập kết quả</a></article>
+    }
+    @foreach(var item in reminders){
+        <article class="dashboard-work-item"><span class="dashboard-work-icon"><partial name="_NavigationIcon" model='@("dashboard")' /></span><div><h3>Đánh giá lại — @item.AssessmentName</h3><p>@item.ClassName · @AssessmentFollowupPlanRules.Label(item.PlannedDate,Model.Today) ngày @item.PlannedDate.ToString("dd/MM/yyyy")</p></div><a class="btn btn-outline-primary btn-sm" asp-controller="Assessments" asp-action="Overview" asp-route-id="@item.AssessmentId">Mở đợt nguồn</a></article>
+    }
+    @if(!assignmentNeeded && imports.Length == 0 && reminders.Length == 0){<p class="dashboard-empty">Chưa có mục ưu tiên trong dữ liệu đang hiển thị. Bạn có thể xem các đợt gần đây và lịch đánh giá lại bên dưới.</p>}
+    <div class="dashboard-row-actions dashboard-work-footer"><a asp-controller="Assessments" asp-action="Index">Xem tất cả đợt đánh giá</a><a href="#dashboard-calendar-title">Xem lịch đánh giá lại</a></div>
+</section>

@@ -1,0 +1,22 @@
+.question-bank-workspace { display: grid; grid-template-columns: 285px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.question-bank-workspace > .analysis-page { min-width: 0; padding-top: 0; }
+.knowledge-navigation { position: sticky; top: 1rem; }
+.knowledge-breadcrumb { color: #526b73; font-size: .82rem; margin-bottom: 1rem; overflow-wrap: anywhere; }
+.knowledge-panel { background: #fff; border: 1px solid #dce6e9; border-radius: 12px; overflow: hidden; }
+.knowledge-panel header, .knowledge-controls { padding: 1rem; border-bottom: 1px solid #e5eaf0; }
+.knowledge-panel h2 { font-size: 1.05rem; margin: 0 0 .4rem; }
+.knowledge-panel header p { font-size: .8rem; margin: 0; color: #5b707a; }
+.knowledge-tree-scroll { padding: .8rem; max-height: calc(100dvh - 390px); min-height: 190px; overflow: auto; scrollbar-gutter: stable; }
+.knowledge-panel .tree-choice { display: block; text-decoration: none; }
+.knowledge-panel .tree-choice[aria-current="page"] { background: #e5f2f0; border-color: #153e46; color: #125e5b; }
+.knowledge-panel details[data-ancestor="true"] > summary { background: #edf6f3; }
+.knowledge-toggle { display: none; }
+@media (max-width: 1199.98px) {
+  .question-bank-workspace { grid-template-columns: minmax(0,1fr); gap: 1rem; }
+  .knowledge-toggle { display: inline-block; margin-bottom: .6rem; }
+  .knowledge-navigation { position: static; }
+  .knowledge-tree-scroll { max-height: 45dvh; }
+}
+
+.question-bank-workspace .table tbody th { min-width: 10rem; }
+.question-bank-workspace .table tbody th a { white-space: nowrap; }

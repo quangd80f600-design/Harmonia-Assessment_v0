@@ -1,0 +1,63 @@
+@model Harmonia.Web.ViewModels.AcademicClassListViewModel
+@{ var manager = User.IsInRole("AcademicManager"); var personal = !manager || Model.MineOnly; ViewData["Title"] = Model.MineOnly ? "Lớp tôi phụ trách" : manager ? "Lớp, giáo viên và học sinh" : "Lớp của tôi"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item active" aria-current="page">Lớp &amp; học sinh</li></ol></nav>
+        <h1>@ViewData["Title"]</h1>
+        <p class="analysis-description">@(!personal ? "Theo dõi giáo viên được phân công, học sinh và các đợt đánh giá của từng lớp." : "Xem các lớp đang phụ trách, danh sách học sinh và các đợt đánh giá được phép truy cập.")</p>
+        @if (manager && Model.CanViewMine) {
+            <nav aria-label="Phạm vi danh sách lớp" class="mb-3 d-flex gap-3">
+                <a asp-action="Index" aria-current="@(!Model.MineOnly ? "page" : null)">Tất cả lớp</a>
+                <a asp-action="Index" asp-route-mine="true" aria-current="@(Model.MineOnly ? "page" : null)">Lớp tôi phụ trách</a>
+            </nav>
+            <p class="analysis-note">Lọc lớp phụ trách không thay đổi quyền quản lý toàn hệ thống của bạn.</p>
+        }
+        <p class="analysis-note">Sĩ số ngày @Model.AsOf.ToString("dd/MM/yyyy") gồm học sinh đã vào lớp và chưa đến ngày kết thúc tham gia lớp.</p>
+        @if (Model.CanWrite) { <a class="btn btn-outline-secondary" asp-action="Create">Tạo lớp</a> }
+        else if (User.IsInRole("AcademicManager")) { <p class="analysis-empty">Chức năng quản lý lớp chưa được bật cho môi trường này.</p> }
+        else { <p class="analysis-note">Bạn xem các lớp đang được phân công. Quản lý học vụ phụ trách tạo lớp, nhập học sinh và phân công giáo viên.</p> }
+    </header>
+    @if (TempData["AcademicMessage"] is string message)
+    {
+        <p class="alert @(TempData["AcademicDeleteSucceeded"] is true ? "alert-success" : "alert-warning")" role="status">@message</p>
+    }
+    <section class="analysis-section" aria-labelledby="classes-heading">
+        <h2 id="classes-heading">Danh sách lớp</h2>
+        @if (Model.Rows.Count == 0)
+        {
+            <p class="analysis-empty">@(Model.MineOnly ? "Bạn chưa có phân công lớp đang hiệu lực. Có thể xem Tất cả lớp bằng quyền quản lý." : Model.CanWrite ? "Chưa có lớp. Tạo lớp để bắt đầu nhập danh sách học sinh." : User.IsInRole("AcademicManager") ? "Chưa có lớp trong hệ thống." : "Chưa có lớp trong phạm vi của bạn. Nhờ quản lý học vụ kiểm tra phân công đang có hiệu lực.")</p>
+        }
+        else
+        {
+            <div class="table-responsive"><table class="table table-striped align-middle">
+                <thead><tr><th scope="col">Mã lớp</th><th scope="col">Tên lớp</th><th scope="col">Khối</th><th scope="col">Năm học</th><th scope="col">Sĩ số</th><th scope="col">@(!personal ? "Giáo viên được phân công" : "Phân công của bạn")</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+                <tbody>@foreach (var row in Model.Rows)
+                {
+                    <tr><td>@row.Class.ClassCode</td><th scope="row"><a asp-action="Details" asp-route-id="@row.Class.ClassId">@row.Class.ClassName</a></th><td>@row.Class.Grade</td><td>@row.Class.AcademicYear</td><td>@row.StudentCount</td><td><div class="relationship-tags">@foreach (var teacher in row.Teachers)
+                        {
+                            @if (teacher.CanOpenTeacher) { <a class="relationship-chip" asp-controller="Teachers" asp-action="Details" asp-route-id="@teacher.TeacherId">@teacher.TeacherName</a> }
+                            else { <span class="relationship-chip">@teacher.TeacherName</span> }
+                        }</div>@if (row.Teachers.Count == 0) { <span class="text-muted">@(User.IsInRole("AcademicManager") ? "Chưa có phân công hiện tại" : "Chưa có phân công của bạn tại ngày đang xem")</span> }</td><td>@(row.Class.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</td><td>
+                        <a asp-action="Details" asp-route-id="@row.Class.ClassId">Xem lớp</a>
+                        @if (Model.CanWrite)
+                        {
+                            <form asp-action="Delete" asp-route-id="@row.Class.ClassId" method="post" class="d-inline ms-2" data-class-delete data-class-name="@row.Class.ClassName">
+                                <input type="hidden" name="expectedName" value="@row.Class.ClassName" />
+                                <input type="hidden" name="confirmed" value="false" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Xóa lớp @row.Class.ClassName" data-class-delete-button disabled>Xóa</button>
+                            </form>
+                        }
+                    </td></tr>
+                }</tbody>
+            </table></div>
+        }
+    </section>
+    @if (Model.CanWrite)
+    {
+        <p class="analysis-note">Chỉ xóa được lớp chưa có lịch sử học sinh, đợt đánh giá hoặc phân công giáo viên. Lớp hiện không có học sinh vẫn có thể chưa đủ điều kiện xóa.</p>
+        <noscript><p class="analysis-note">Bật JavaScript để sử dụng hộp thoại xác nhận xóa lớp.</p></noscript>
+    }
+</div>
+@section Scripts {
+    <script src="~/js/class-deletion.js" asp-append-version="true" defer></script>
+}

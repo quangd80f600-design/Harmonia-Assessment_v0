@@ -1,0 +1,19 @@
+@model Harmonia.Web.ViewModels.QuestionDetailsPage
+@{ ViewData["Title"] = "Chi tiết câu hỏi"; ViewData["CompactAuthoring"] = true; }
+<link rel="stylesheet" href="~/css/test-workspace.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/question-navigation.css" asp-append-version="true" />
+<div class="question-bank-workspace">
+<partial name="_QuestionKnowledgeNavigation" model="@(new Harmonia.Web.ViewModels.QuestionSearch { Grade = Model.Grade, SubskillId = Model.Question.SubskillId, UnitId = Model.UnitId, AreaId = Model.AreaId })" />
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Questions">Ngân hàng câu hỏi</a><h1>@Model.Question.QuestionCode</h1><p>@Model.SubskillCaption · Khối @Model.Grade · Mức độ @Model.Question.DifficultyLevel</p><p class="analysis-note">Đã có trong @Model.TestCount đề. Câu đã nằm trong đề được bảo vệ; snapshot lịch sử giữ nguyên.</p></header>
+    <section class="analysis-section"><p class="text-break" style="white-space:pre-wrap">@Model.Question.QuestionText</p><ol type="A"><li>@Model.Question.OptionA</li><li>@Model.Question.OptionB</li><li>@Model.Question.OptionC</li><li>@Model.Question.OptionD</li></ol><p>Đáp án đúng: <strong>@Model.Question.AnswerKey</strong></p><p style="white-space:pre-wrap">@Model.Question.Explanation</p>
+        @if (Model.TestCount == 0 && User.IsInRole("AcademicManager")) { <a class="btn btn-outline-secondary" asp-action="EditQuestion" asp-route-id="@Model.Id">Sửa câu hỏi chưa dùng</a> }
+        <a class="btn btn-outline-secondary" asp-action="CopyQuestion" asp-route-id="@Model.Id">Tạo bản sao để điều chỉnh</a>
+        <p class="analysis-note">Ngân hàng câu hỏi dùng chung. Giáo viên tạo bản sao khi cần điều chỉnh; chỉ quản lý học vụ được sửa trực tiếp câu chưa thuộc đề.</p>
+        <p>Mục đích: <strong>@Harmonia.Web.Models.QuestionPurposes.Label(Model.Question.UsagePurpose)</strong></p>
+        @if (Model.Status == "Active" && Model.Question.UsagePurpose == "ForTest") { <a class="btn btn-outline-secondary" asp-action="CreateTest" asp-route-grade="@Model.Grade" asp-route-search="@Model.Question.QuestionCode">Chọn câu này khi tạo đề</a> }
+        <a class="btn btn-link" asp-action="CreateQuestion" asp-route-subskillId="@Model.Question.SubskillId">Tạo câu hỏi khác</a>
+    </section>
+</div>
+
+</div>
+<script src="~/js/question-navigation.js" asp-append-version="true" defer></script>

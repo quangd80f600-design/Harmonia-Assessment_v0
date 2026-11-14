@@ -1,0 +1,112 @@
+/* Identity styling only: no data-driven decoration or new business states. */
+html { font-size: 16px; }
+.harmonia-app { margin: 0; min-height: 100dvh; background: var(--hm-background); color: var(--hm-ink); font-family: var(--hm-font); font-size: .875rem; line-height: 1.7; }
+.harmonia-app *, .harmonia-app *::before, .harmonia-app *::after { box-sizing: border-box; }
+.harmonia-workspace { min-width: 0; min-height: 100dvh; display: flex; flex-direction: column; }
+.harmonia-topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.1rem 2rem; border-bottom: 1px solid var(--hm-border); background: #ffffffb8; }
+.harmonia-topbar-caption { color: var(--hm-muted); font-size: .76rem; }
+.harmonia-role-badge { display: inline-flex; align-items: center; border: 1px solid var(--hm-border); background: #edf2f4; color: #405b65; padding: .3rem .65rem; border-radius: 6px; font-size: .7rem; font-weight: 500; white-space: nowrap; }
+.harmonia-content { flex: 1; width: 100%; max-width: 1600px; margin: 0 auto; padding: 2rem; min-width: 0; }
+.harmonia-content main { min-width: 0; }
+.harmonia-content main:focus { outline: none; }
+.harmonia-content h1, .harmonia-content h2, .harmonia-content h3 { color: var(--hm-ink); letter-spacing: -.025em; }
+.harmonia-content h1, .harmonia-content .analysis-header h1 { font-size: clamp(1.45rem, 2.2vw, 1.85rem); font-weight: 700; line-height: 1.4; }
+.harmonia-content h1 { margin: 0 0 .7rem; }
+.harmonia-content .analysis-page { --analysis-accent: var(--hm-link); --analysis-ink: var(--hm-ink); --analysis-muted: var(--hm-muted); --analysis-line: var(--hm-border); padding-top: 0; }
+.harmonia-content .analysis-header { margin-bottom: 1.6rem; }
+.harmonia-content .analysis-description { max-width: 70rem; line-height: 1.8; }
+.harmonia-content .analysis-section { background: #fff; border-color: var(--hm-border); border-radius: 12px; box-shadow: 0 2px 10px #153e4603; }
+.harmonia-content .analysis-section h2 { font-size: 1.05rem; font-weight: 600; }
+.harmonia-content .analysis-context { background: var(--hm-surface-soft); border: 1px solid #dde8e9; border-radius: 8px; }
+.harmonia-content .analysis-metrics div { padding: 1.15rem; background: #fff; border: 1px solid var(--hm-border); border-top: 3px solid var(--hm-teal); border-radius: 9px; }
+.harmonia-content .analysis-metrics strong { color: var(--hm-teal-deep); font-weight: 700; }
+.harmonia-content .analysis-empty { background: #f2f6f7; color: var(--hm-muted); border: 1px solid #e7eef0; }
+.harmonia-content a:not(.btn), .harmonia-content .analysis-page a:not(.btn) { color: var(--hm-link); text-underline-offset: .2em; }
+.harmonia-content a:not(.btn):hover { color: var(--hm-teal-deep); }
+.harmonia-app .btn { font-size: .8rem; font-weight: 600; border-radius: 7px; padding: .6rem .9rem; line-height: 1.5; }
+.harmonia-app .btn-sm { padding: .4rem .65rem; font-size: .74rem; }
+.harmonia-app .btn-primary, .harmonia-content .analysis-page .btn-primary { --bs-btn-bg: var(--hm-teal-deep); --bs-btn-border-color: var(--hm-teal-deep); --bs-btn-color: #fff; --bs-btn-hover-bg: #1c5b62; --bs-btn-hover-border-color: #1c5b62; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #102f37; --bs-btn-active-border-color: #102f37; --bs-btn-active-color: #fff; --bs-btn-disabled-bg: var(--hm-teal-deep); --bs-btn-disabled-border-color: var(--hm-teal-deep); color: #fff; }
+.harmonia-app .btn-outline-secondary, .harmonia-app .btn-outline-primary { --bs-btn-color: var(--hm-teal-deep); --bs-btn-border-color: #bed0d5; --bs-btn-hover-bg: var(--hm-surface-soft); --bs-btn-hover-color: var(--hm-teal-deep); --bs-btn-hover-border-color: #91b8ba; --bs-btn-active-bg: #dfedec; --bs-btn-active-color: var(--hm-teal-deep); --bs-btn-active-border-color: #91b8ba; --bs-btn-disabled-color: #72858c; --bs-btn-disabled-border-color: #d5e0e3; }
+.harmonia-content .analysis-page .btn-outline-secondary { color: var(--hm-teal-deep); }
+.harmonia-app .btn-link { color: var(--hm-link); }
+.harmonia-app .form-label, .harmonia-app label { color: #364e58; font-weight: 500; font-size: .8rem; }
+.harmonia-app .form-control, .harmonia-app .form-select { border-color: #cddce0; color: var(--hm-ink); border-radius: 7px; padding: .65rem .8rem; font-family: inherit; font-size: .84rem; }
+.harmonia-app .form-control::placeholder { color: #7a8d94; }
+.harmonia-app .form-control:focus, .harmonia-app .form-select:focus { border-color: var(--hm-teal); box-shadow: 0 0 0 3px #248f871c; }
+.harmonia-app .form-check-input:checked { background-color: var(--hm-teal-deep); border-color: var(--hm-teal-deep); }
+.harmonia-app a:focus-visible, .harmonia-app button:focus-visible, .harmonia-app summary:focus-visible { outline: 3px solid var(--hm-link); outline-offset: 3px; }
+.harmonia-app .btn:focus-visible { box-shadow: 0 0 0 3px #248f872b; }
+.harmonia-content .alert { border-radius: 9px; font-size: .82rem; line-height: 1.8; }
+.harmonia-content .alert-info { --bs-alert-color: #234f55; --bs-alert-bg: #edf7f5; --bs-alert-border-color: #cce4df; }
+.harmonia-content .alert-success { --bs-alert-color: #245b50; --bs-alert-bg: #edf7f2; --bs-alert-border-color: #cde5da; }
+.harmonia-content .table { --bs-table-color: var(--hm-ink); --bs-table-bg: #fff; --bs-table-striped-bg: #f6f9f9; --bs-table-striped-color: var(--hm-ink); --bs-table-border-color: #e0e9ec; font-size: .8rem; }
+.harmonia-content .table th, .harmonia-content .table td { padding: .8rem .75rem; vertical-align: middle; overflow-wrap: anywhere; }
+.harmonia-content .table thead th { background: #f0f5f6; color: #3d5963; font-size: .73rem; font-weight: 600; border-bottom-width: 1px; }
+.harmonia-content .table-responsive { border: 1px solid var(--hm-border); border-radius: 8px; background: #fff; }
+.harmonia-content .table-responsive .table { margin-bottom: 0; }
+.harmonia-content .table-bordered > :not(caption) > * > * { border-color: #e0e9ec; }
+.harmonia-content .chart-fill { background: linear-gradient(90deg, var(--hm-teal), #187b78); }
+.harmonia-content .chart-track { background: #e4edee; border-radius: 5px; }
+.harmonia-content .analysis-chart-row[aria-pressed="true"] { border-color: #75b8b0; background: #edf7f5; }
+.harmonia-content .question-options .correct-option { border-color: #90c1bb; background: #edf7f5; }
+.harmonia-content .participation-status.is-recorded { background: #e9f4f1; color: #1e6257; }
+.harmonia-content .participation-progress .progress-bar { background: var(--hm-teal); }
+.harmonia-content .breadcrumb { color: var(--hm-muted); font-size: .75rem; }
+.harmonia-content details > summary { cursor: pointer; }
+.harmonia-content details[data-taxonomy-unit] > summary { color: var(--hm-teal-deep); }
+.harmonia-content details[data-taxonomy-unit] > summary::marker { color: var(--hm-teal); }
+.harmonia-footer { display: flex; justify-content: space-between; gap: 1rem; margin-top: auto; padding: 1.2rem 2rem; border-top: 1px solid var(--hm-border); color: var(--hm-muted); font-size: .68rem; }
+.harmonia-auth-card { background: #fff; border: 1px solid var(--hm-border); border-radius: 14px; box-shadow: 0 10px 45px #153e4608; padding: 2rem; }
+.harmonia-auth-card h1 { font-size: 1.5rem; }
+.harmonia-auth-card .btn { width: 100%; margin-top: .5rem; }
+.harmonia-skip-link { position: fixed; z-index: 1100; top: .6rem; left: .6rem; transform: translateY(-160%); padding: .65rem 1rem; border-radius: 6px; background: #fff; color: var(--hm-teal-deep); box-shadow: 0 3px 15px #0002; }
+.harmonia-skip-link:focus { transform: translateY(0); }
+@media (min-width: 1200px) { .harmonia-workspace { margin-left: var(--hm-sidebar-width); } }
+@media (max-width: 1199.98px) {
+  .harmonia-topbar { padding: .8rem 1.25rem; }
+  .harmonia-content { padding: 1.5rem 1.25rem; }
+  .harmonia-footer { padding: 1rem 1.25rem; }
+}
+@media (max-width: 575.98px) {
+  .harmonia-topbar { padding: .75rem 1rem; gap: .65rem; }
+  .harmonia-topbar-caption { font-size: .68rem; }
+  .harmonia-role-badge { font-size: .64rem; }
+  .harmonia-content { padding: 1.25rem 1rem; }
+  .harmonia-content .analysis-section { padding: 1rem; }
+  .harmonia-content .analysis-metrics { gap: .6rem; }
+  .harmonia-content .analysis-metrics div { padding: .75rem; }
+  .harmonia-footer { padding: 1rem; flex-wrap: wrap; }
+  .harmonia-auth-card { padding: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) { .harmonia-app * { transition: none !important; scroll-behavior: auto !important; } }
+@media (forced-colors: active) {
+  .harmonia-content .chart-fill { background: Highlight; forced-color-adjust: none; }
+  .harmonia-content .chart-track { border: 1px solid CanvasText; }
+}
+@media print {
+  .harmonia-sidebar, .harmonia-topbar, .harmonia-footer, .harmonia-skip-link { display: none !important; }
+  .harmonia-app { background: #fff; }
+  .harmonia-workspace { margin: 0; min-height: 0; }
+  .harmonia-content { padding: 0; max-width: none; }
+}
+/* Keep short Vietnamese column headings readable; scroll stays inside table-responsive. */
+.harmonia-content .table thead th { overflow-wrap: normal; }
+.assessment-index .table thead th:last-child { min-width: 5rem; white-space: nowrap; }
+
+/* Relationship summaries remain readable on small tables and long names. */
+.relationship-tags { display: flex; flex-wrap: wrap; gap: .4rem; min-width: 9rem; }
+.relationship-chip { display: inline-flex; flex-direction: column; padding: .35rem .6rem; border: 1px solid #d3e5e2; border-radius: 6px; background: #edf6f3; text-decoration: none; max-width: 100%; overflow-wrap: anywhere; }
+.relationship-chip small { display: block; font-size: .66rem; color: var(--hm-muted); }
+[data-assignment-form] .field-validation-error { display: block; margin-top: .35rem; font-size: .78rem; }
+
+/* Authoring keeps the knowledge tree beside the main content; other modules keep the full menu. */
+@media (min-width: 1200px) {
+  .compact-authoring { --hm-sidebar-width: 76px; }
+  .compact-authoring .harmonia-navbar > .container-fluid { padding: 1.25rem .5rem; }
+  .compact-authoring .harmonia-navbar .navbar-brand { width: 48px; overflow: hidden; justify-content: flex-start; margin: 0 auto; }
+  .compact-authoring .harmonia-navbar .harmonia-navbar-logo { width: 168px; max-width: none; flex-shrink: 0; }
+  .compact-authoring .sidebar-section-label, .compact-authoring .sidebar-tagline { display: none; }
+  .compact-authoring .sidebar-menu .nav-link, .compact-authoring .sidebar-profile, .compact-authoring .sidebar-logout { justify-content: center; padding: .9rem .5rem; }
+  .compact-authoring .sidebar-menu .nav-link > span, .compact-authoring .sidebar-profile > span:not(.sidebar-avatar), .compact-authoring .sidebar-logout > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .compact-authoring .harmonia-content { padding: 1.5rem; }
+}

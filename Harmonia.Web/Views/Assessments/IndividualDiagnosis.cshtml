@@ -1,0 +1,123 @@
+@model Harmonia.Web.ViewModels.IndividualDiagnosisViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Phân tích kết quả cá nhân";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var selectedSubskillId = Model.Subskills.FirstOrDefault()?.SubskillId;
+}
+<div class="analysis-page" data-individual-diagnosis>
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Danh sách đợt đánh giá</a></li>
+            <li class="breadcrumb-item"><a asp-action="Overview" asp-route-id="@Model.Assessment.AssessmentId">Tổng quan đợt đánh giá</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Phân tích cá nhân</li>
+        </ol></nav>
+        <h1>Phân tích kết quả cá nhân</h1>
+        <p class="analysis-description">Kết quả đã ghi nhận và bằng chứng theo từng đơn vị kiến thức trong đề.</p>
+        <p class="skill-name">@Model.StudentName <small class="skill-code">@Model.StudentCode</small></p>
+        <partial name="_AnalysisContext" model="Model.Assessment" />
+        <p><a class="btn btn-outline-secondary" asp-route="StudentProgress" asp-route-classId="@Model.ClassId" asp-route-studentId="@Model.StudentId">Theo dõi các lần đánh giá</a></p>
+        <partial name="_InterventionNextStep" />
+        @if (Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.ParentCommentOptions>>()?.Value.Enabled == true)
+        { <p><a class="btn btn-outline-primary" asp-route="StudentComment" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@Model.StudentId">Soạn báo cáo học sinh</a></p> }
+        @if (Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.WorksheetOptions>>()?.Value.Enabled == true && ViewData["InterventionAssessmentId"] is long worksheetAssessment)
+        { <p><a class="btn btn-outline-primary" asp-controller="Worksheets" asp-action="Compose" asp-route-assessmentId="@worksheetAssessment" asp-route-studentId="@Model.StudentId">Soạn phiếu bổ trợ</a></p> }
+        @if (ViewData["StudentReportAllowed"] is true)
+        {
+            <p><a class="btn btn-outline-secondary" asp-route="StudentReport" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@Model.StudentId">Báo cáo / In cho phụ huynh</a></p>
+        }
+        <div class="analysis-metrics individual-metrics">
+            <div><span>Điểm đã lưu</span><strong>@(Model.Score is decimal score ? score.ToString("0.##", culture) : "Chưa có điểm")</strong></div>
+            <div><span>Response đã ghi nhận</span><strong>@(Model.HasAttempt ? Model.TotalResponses.ToString() : "Chưa có dữ liệu")</strong></div>
+            <div><span>Đúng / Sai</span><strong>@(Model.HasAttempt ? $"{Model.CorrectResponses} / {Model.IncorrectResponses}" : "Chưa có dữ liệu")</strong></div>
+            <div><span>Tỷ lệ đúng chung</span><strong>@(Model.AccuracyPercentage is decimal overall ? overall.ToString("0.##", culture) + "%" : "Chưa có dữ liệu")</strong></div>
+        </div>
+        @if (!Model.HasAttempt)
+        {
+            <p class="analysis-empty">Chưa ghi nhận kết quả của học sinh trong đợt đánh giá này. Chưa có điểm để phân tích; trạng thái này không phải điểm 0.</p>
+        }
+        else if (Model.TotalResponses == 0)
+        {
+            <p class="analysis-empty">Đã ghi nhận kết quả bài đánh giá nhưng chưa có dữ liệu đúng, sai của từng câu trong đề. Điểm đã lưu được giữ nguyên; chưa thể tính tỷ lệ trả lời đúng.</p>
+        }
+        <p class="analysis-note">Tỷ lệ đúng chung tính theo tổng Response hợp lệ. Số câu ít chỉ cung cấp bằng chứng hạn chế; không tự suy ra mức năng lực từ tỷ lệ này.</p>
+    </header>
+    <div class="question-workspace individual-workspace">
+    <section class="analysis-section" aria-labelledby="individual-chart-heading">
+        <h2 id="individual-chart-heading"><span class="section-number">01.</span> Kết quả theo nội dung kiến thức</h2>
+        <p class="analysis-note">Tỷ lệ đúng từ thấp đến cao; các đơn vị chưa có Response ở cuối. Chọn Subskill để xem bằng chứng. Dùng Tab và Enter / Space, hoặc phím ↑ ↓ Home End trên biểu đồ.</p>
+        <div class="question-workspace-scroll" role="region" aria-labelledby="individual-chart-heading" tabindex="0">
+        @if (Model.Subskills.Count == 0)
+        {
+            <p class="analysis-empty">Chưa có dữ liệu Subskill để hiển thị.</p>
+        }
+        else
+        {
+            <div class="analysis-scale" aria-hidden="true"><span>Tỷ lệ đúng</span><span>0% — 100%</span></div>
+            <ul class="analysis-chart">
+            @foreach (var skill in Model.Subskills)
+            {
+                var active = skill.SubskillId == selectedSubskillId;
+                <li>
+                    <button type="button" class="analysis-chart-row" data-subskill-select="evidence-@skill.SubskillId"
+                            aria-controls="evidence-@skill.SubskillId" aria-pressed="@(active ? "true" : "false")">
+                        <span class="chart-label"><strong>@skill.SubskillName</strong><small>@skill.SubskillCode · @skill.ResponseCount / @skill.QuestionCount câu có Response · @skill.CorrectCount đúng / @skill.IncorrectCount sai</small></span>
+                        <span class="chart-track @(skill.AccuracyPercentage is null ? "chart-track-missing" : "")" aria-hidden="true">
+                            @if (skill.AccuracyPercentage is decimal width)
+                            {
+                                <span class="chart-fill" style="width: @(width.ToString(CultureInfo.InvariantCulture))%"></span>
+                            }
+                        </span>
+                        <span class="chart-value">@(skill.AccuracyPercentage is decimal pct ? pct.ToString("0.##", culture) + "%" : "Chưa có dữ liệu")<span class="visually-hidden"> tỷ lệ đúng</span></span>
+                    </button>
+                </li>
+            }
+            </ul>
+        }
+        </div>
+        <noscript><style>.individual-panel:not(.is-default) { display: block; }</style><p class="analysis-note">Bật JavaScript để chọn Subskill trên biểu đồ. Khi chưa bật, toàn bộ bằng chứng vẫn hiển thị ở mục 02.</p></noscript>
+    </section>
+    <section class="analysis-section" aria-labelledby="individual-evidence-heading">
+        <h2 id="individual-evidence-heading"><span class="section-number">02.</span> Bằng chứng và chi tiết kiến thức</h2>
+        <p class="analysis-note">Nội dung và đáp án đúng theo snapshot của đề. Hệ thống hiện chỉ lưu đúng/sai, không lưu lựa chọn A/B/C/D của học sinh. Thiếu Response không đồng nghĩa với câu trả lời sai hoặc bỏ trống.</p>
+        <p class="analysis-note">Trong mỗi Subskill: câu sai trước, câu đúng sau, cuối cùng là câu chưa có Response. Giữ số câu gốc trong đề.</p>
+        <p class="visually-hidden" data-subskill-announcement role="status" aria-live="polite" aria-atomic="true"></p>
+        <div class="question-workspace-scroll" data-individual-detail-scroll role="region" aria-labelledby="individual-evidence-heading" tabindex="0">
+        @if (Model.Subskills.Count == 0)
+        {
+            <p class="analysis-empty">Chưa có bằng chứng câu hỏi cho kết quả cá nhân này.</p>
+        }
+        @foreach (var skill in Model.Subskills)
+        {
+            var active = skill.SubskillId == selectedSubskillId;
+            <div class="individual-panel @(active ? "is-default" : "")" id="evidence-@skill.SubskillId"
+                 data-subskill-panel data-subskill-name="@skill.SubskillName" role="region" aria-labelledby="evidence-title-@skill.SubskillId">
+                <h3 id="evidence-title-@skill.SubskillId">@skill.SubskillName <small class="skill-code">@skill.SubskillCode</small></h3>
+                <p class="analysis-note">@skill.ResponseCount / @skill.QuestionCount câu có Response · @skill.CorrectCount đúng / @skill.IncorrectCount sai</p>
+                @foreach (var question in skill.Questions.OrderBy(q => q.IsCorrect switch { false => 0, true => 1, _ => 2 }).ThenBy(q => q.QuestionNumber))
+                {
+                    <article class="individual-question @(question.IsCorrect == false ? "is-incorrect" : "")">
+                        <h4>Câu @question.QuestionNumber <span class="participation-status @(question.IsCorrect.HasValue ? "is-recorded" : "is-missing")">@(question.IsCorrect switch { true => "Đúng", false => "Sai", null => "Chưa có Response" })</span></h4>
+                        <p class="question-text">@question.QuestionText</p>
+                        <ul class="question-options">
+                            <li><strong>A.</strong> @question.OptionA</li><li><strong>B.</strong> @question.OptionB</li>
+                            <li><strong>C.</strong> @question.OptionC</li><li><strong>D.</strong> @question.OptionD</li>
+                        </ul>
+                        <p>Đáp án đúng trong đề: <strong>@question.AnswerKey</strong></p>
+                    </article>
+                }
+            </div>
+        }
+        </div>
+    </section>
+    </div>
+    <section class="analysis-section" aria-labelledby="individual-review-heading">
+        <h2 id="individual-review-heading"><span class="section-number">03.</span> Nhận xét và định hướng học tập</h2>
+        @if(Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.ParentCommentOptions>>()?.Value.Enabled == true)
+        { <p>Hoàn tất phiếu bổ trợ cần giao, sau đó <a asp-route="StudentComment" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@Model.StudentId">soạn báo cáo học sinh và duyệt nhận xét</a>.</p> }
+        else { <p class="analysis-empty mb-0">Chức năng soạn báo cáo học sinh chưa được bật trong môi trường này.</p> }
+    </section>
+</div>
+@section Scripts {
+    <script src="~/js/individual-diagnosis.js" asp-append-version="true" defer></script>
+}

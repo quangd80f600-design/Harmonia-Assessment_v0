@@ -1,0 +1,8 @@
+@model Harmonia.Web.ViewModels.QuestionCsvOutcome
+@{ ViewData["Title"] = "Kết quả nhập câu hỏi"; }
+<div class="analysis-page"><section class="analysis-section">
+    <h1>@(Model.Succeeded ? "Đã nhập câu hỏi" : Model.CommitUncertain ? "Cần kiểm tra kết quả lưu" : "Chưa nhập được câu hỏi")</h1>
+    <p role="status">@Model.Message</p>
+    <a class="btn btn-primary" asp-controller="Authoring" asp-action="Questions">Mở ngân hàng câu hỏi</a>
+    <a class="btn btn-link" asp-action="Index">Nhập file khác</a>
+</section></div>

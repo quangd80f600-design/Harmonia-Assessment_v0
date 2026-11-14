@@ -1,0 +1,41 @@
+@model Harmonia.Web.ViewModels.ImportOutcome
+@{
+    ViewData["Title"] = "Kết quả nhập CSV";
+}
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.Assessment.AssessmentId">Tổng quan đợt đánh giá</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Kết quả nhập CSV</li>
+        </ol></nav>
+        <h1>@(Model.Succeeded ? "Nhập kết quả thành công" : Model.Uncertain ? "Cần kiểm tra kết quả lưu" : "Không nhập được batch")</h1>
+        <partial name="~/Views/Assessments/_AnalysisContext.cshtml" model="Model.Assessment" />
+    </header>
+    <section class="analysis-section" aria-label="Kết quả xử lý">
+        @if (Model.Succeeded)
+        {
+            <p role="status">Lần nhập #@Model.BatchId: thành công. Đã lưu kết quả của @Model.StudentCount học sinh với @Model.ResponseCount câu trả lời.</p>
+            <p>Điểm và kết quả đúng/sai đã được lưu. S1, S2 và S4 sử dụng dữ liệu mới khi mở trang.</p>
+        }
+        else
+        {
+            @if (!Model.Uncertain)
+            {
+                <p>Toàn bộ kết quả chưa được nhập; không có Attempt/Response nhập dở.</p>
+                @if (Model.BatchId.HasValue) { <p class="analysis-note">Đã lưu log Failed ở batch #@Model.BatchId.</p> }
+            }
+            <ul role="alert">
+            @foreach (var error in Model.Errors)
+            {
+                <li>@if (error.Line.HasValue) { <span>Dòng @error.Line · </span> } @error.Field: @error.Message</li>
+            }
+            </ul>
+        }
+        <a class="btn btn-outline-secondary" asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.Assessment.AssessmentId">Về tổng quan S4</a>
+        <a class="btn btn-outline-secondary" asp-controller="Assessments" asp-action="SubskillSummary" asp-route-id="@Model.Assessment.AssessmentId">Phân tích Subskill</a>
+        @if (!Model.Uncertain)
+        {
+            <a class="btn btn-link" asp-action="Index" asp-route-id="@Model.Assessment.AssessmentId">Chọn file khác</a>
+        }
+    </section>
+</div>

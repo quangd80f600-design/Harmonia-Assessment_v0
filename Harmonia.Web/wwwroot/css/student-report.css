@@ -1,0 +1,96 @@
+:root { color-scheme: light; font-family: var(--hm-font, Arial, sans-serif); color: var(--hm-ink, #172b35); background: var(--hm-background, #f5f7f8); }
+* { box-sizing: border-box; }
+body { margin: 0; font-size: 14px; line-height: 1.55; }
+a { color: #0b6569; overflow-wrap: anywhere; }
+.report-toolbar { max-width: 210mm; margin: 24px auto 18px; display: flex; gap: 20px; align-items: center; justify-content: space-between; padding: 0 8px; }
+.report-toolbar p { margin: 4px 0 0; color: #596879; font-size: 12px; }
+.report-toolbar button { border: 0; border-radius: 6px; background: #106a70; color: #fff; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.report-toolbar button:focus-visible, a:focus-visible { outline: 3px solid #c78519; outline-offset: 3px; }
+.student-report { width: 210mm; max-width: calc(100% - 24px); margin: 0 auto 32px; padding: 14mm; background: #fff; box-shadow: 0 4px 28px #21334718; }
+.report-header { border-bottom: 2px solid #137a7f; padding-bottom: 18px; }
+.report-brand { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.report-brand img { width: 145px; height: auto; }
+.report-brand span { font-size: 9px; letter-spacing: .7px; text-align: right; color: #60717d; }
+.report-eyebrow { font-size: 10px; color: #12676e; font-weight: 700; letter-spacing: 1.2px; margin: 0 0 6px; }
+h1 { font-size: 26px; line-height: 1.25; margin: 0 0 20px; color: #18344c; }
+.report-context { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 0; }
+.report-context div { min-width: 0; }
+.report-wide { grid-column: 1 / -1; }
+dt { font-size: 11px; color: #5b6a79; }
+dd { margin: 2px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.report-section { margin-top: 24px; }
+h2 { font-size: 18px; line-height: 1.3; border-bottom: 1px solid #dce4e9; margin: 0 0 14px; padding-bottom: 9px; display: flex; gap: 10px; align-items: center; }
+h2 span { background: #e9f4f3; color: #12676e; border-radius: 4px; font-size: 13px; padding: 3px 7px; }
+h3 { margin: 16px 0 5px; font-size: 15px; }
+h3 small { display: block; color: #657382; font-size: 10px; font-weight: 400; }
+h4 { font-size: 13px; margin: 0 0 3px; }
+p { margin: 8px 0; overflow-wrap: anywhere; }
+.report-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.report-summary div { background: #f1f6f8; border-top: 2px solid #117b80; padding: 10px; }
+.report-summary span { display: block; font-size: 11px; color: #53687b; }
+.report-summary strong { display: block; font-size: 20px; line-height: 1.4; margin-top: 3px; }
+.report-notice { padding: 10px 12px; border-left: 3px solid #b17929; background: #fff8e9; }
+.report-empty { color: #4f6072; background: #f5f7f9; padding: 10px 12px; }
+.report-explanation, .report-area-total { font-size: 12px; }
+.report-table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12px; margin: 8px 0 12px; }
+.report-table .skill-column { width: 42%; }
+.report-table th, .report-table td { border: 1px solid #d6e0e5; padding: 7px 6px; vertical-align: top; overflow-wrap: anywhere; }
+.report-table thead { background: #eff4f6; }
+.report-table thead th { text-align: center; font-size: 10px; }
+.report-table tbody th { text-align: left; font-weight: 600; }
+.report-table td { text-align: center; }
+.report-table small { display: block; font-size: 10px; font-weight: 400; color: #526576; }
+.report-caveat { display: block; color: #805819; font-size: 10px; font-weight: 400; margin-top: 3px; }
+.report-footnote { font-size: 11px; color: #586777; }
+.report-assignments { padding-left: 20px; }
+.report-assignments li { margin-bottom: 7px; overflow-wrap: anywhere; }
+.report-plan { border-left: 2px solid #c8dfde; padding-left: 14px; margin-bottom: 18px; }
+.report-instructions { white-space: pre-wrap; }
+.report-resources { padding-left: 20px; }
+.report-resources li { padding-left: 2px; margin: 10px 0 16px; }
+.report-resource-skill { color: #4c6573; font-size: 11px; margin: 3px 0; }
+.report-resource-url { font-size: 11px; word-break: break-word; }
+.report-footer { margin-top: 28px; border-top: 1px solid #d6e0e5; padding-top: 10px; font-size: 10px; color: #5a6b7b; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 600px) {
+    .student-report { padding: 20px 16px; }
+    .report-toolbar { margin: 16px 12px; flex-wrap: wrap; }
+    .report-brand span { display: none; }
+    h1 { font-size: 23px; }
+    .report-summary { grid-template-columns: 1fr; }
+    .report-summary strong { font-size: 18px; }
+    .report-table { font-size: 11px; }
+    .report-table th, .report-table td { padding: 5px 3px; }
+}
+@page { size: A4 portrait; margin: 14mm 13mm; }
+@media print {
+    :root, body { background: #fff; color: #172b3b; }
+    body { font-size: 10pt; line-height: 1.45; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .report-toolbar, nav, .navbar, button, .no-print { display: none !important; }
+    .student-report { width: auto; max-width: none; margin: 0; padding: 0; box-shadow: none; }
+    .report-brand span { display: block; }
+    .report-summary { grid-template-columns: 1fr 1fr 1fr; }
+    h1 { font-size: 21pt; }
+    h2 { font-size: 14pt; }
+    h3 { font-size: 11pt; }
+    h2, h3, h4, .report-area-total { break-after: avoid; page-break-after: avoid; }
+    .report-header, .report-summary, .report-notice { break-inside: avoid; page-break-inside: avoid; }
+    .report-table { font-size: 9pt; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    p { orphans: 3; widows: 3; }
+    .report-plan, .report-section, .report-area, .report-resources { break-inside: auto; }
+    .report-resource-url { color: inherit; text-decoration: none; }
+    .report-footer { position: static; break-inside: avoid; }
+}
+
+/* Harmonia Identity Concept 01; A4 dimensions and print boundaries above are preserved. */
+.report-toolbar button { background: var(--hm-teal-deep, #153e46); border-radius: 7px; }
+.report-header { border-bottom-color: var(--hm-teal, #248f87); }
+h1 { color: var(--hm-ink, #172b35); }
+h2 span { color: var(--hm-link, #176f6b); background: #e9f4f2; }
+.report-summary div { background: #f0f5f5; border-top-color: var(--hm-teal, #248f87); border-radius: 7px; }
+.report-summary strong { color: var(--hm-teal-deep, #153e46); }
+.report-table thead { background: #f0f5f5; }
+
+/* Approved narratives preserve teacher paragraph breaks without inline styles. */
+.parent-comment { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -1,0 +1,35 @@
+@model IReadOnlyList<Harmonia.Web.ViewModels.TeacherListRow>
+@using Harmonia.Web.ViewModels
+@{ var manager = User.IsInRole("AcademicManager"); var context = ViewData["AssignmentClass"] as AcademicClassHeader; ViewData["Title"] = manager ? "Giáo viên & phân công" : "Hồ sơ và lớp phụ trách"; }
+<div class="analysis-page">
+    <header class="analysis-header"><h1>@ViewData["Title"]</h1>
+        <p class="analysis-description">Lớp phụ trách tại ngày @Harmonia.Web.Services.AcademicManagementService.Today.ToString("dd/MM/yyyy"). Trạng thái hồ sơ và tài khoản được trình bày riêng.</p>
+        @if (context is not null)
+        {
+            <div class="alert alert-info" data-assignment-context="@context.ClassId">Đang chọn giáo viên để phân công cho <strong>@context.ClassName · @context.AcademicYear</strong>. <a asp-controller="Classes" asp-action="Details" asp-route-id="@context.ClassId">Quay về lớp</a></div>
+        }
+        @if (manager) { <a class="btn btn-primary" asp-action="Create">Tạo hồ sơ giáo viên</a> }
+    </header>
+    <section class="analysis-section">
+        @if (Model.Count == 0) { <p class="analysis-empty">Chưa có hồ sơ giáo viên trong phạm vi của bạn.</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table align-middle">
+                <thead><tr><th>Mã</th><th>Giáo viên</th><th>Lớp đang phụ trách</th><th>Hồ sơ</th><th>Tài khoản</th>@if (manager) { <th>Thao tác</th> }</tr></thead>
+                <tbody>@foreach (var t in Model)
+                {
+                    <tr data-teacher-id="@t.Id"><td>@t.Code</td><th scope="row"><a asp-action="Details" asp-route-id="@t.Id" asp-route-classId="@context?.ClassId">@t.Name</a></th>
+                        <td><div class="relationship-tags">@foreach (var assignment in t.Assignments)
+                        {
+                            @if (assignment.CanOpenClass) { <a class="relationship-chip" asp-controller="Classes" asp-action="Details" asp-route-id="@assignment.ClassId">@assignment.ClassName <small>@assignment.AcademicYear</small></a> }
+                            else { <span class="relationship-chip">@assignment.ClassName <small>@assignment.AcademicYear</small></span> }
+                        }</div>@if (t.Assignments.Count == 0) { <span class="text-muted">Chưa có phân công hiện tại</span> }</td>
+                        <td>@(t.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</td>
+                        <td>@(!t.HasAccount ? "Chưa cấp tài khoản" : t.AccountActive ? "Đang bật" : "Đã khóa")</td>
+                        @if (manager) { <td>@if (t.Status == "Active") { <a asp-action="Details" asp-route-id="@t.Id" asp-route-classId="@context?.ClassId" asp-fragment="assignment-form">@(context is null ? "Phân công lớp" : "Chọn giáo viên này")</a> }</td> }
+                    </tr>
+                }</tbody>
+            </table></div>
+        }
+    </section>
+</div>

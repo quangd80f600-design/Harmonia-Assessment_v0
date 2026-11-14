@@ -1,0 +1,103 @@
+@model Harmonia.Web.ViewModels.StudentProgressViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Theo dõi kết quả học sinh";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+<div class="analysis-page" data-student-progress>
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Classes" asp-action="Index">Lớp học</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Classes" asp-action="Details" asp-route-id="@Model.ClassId">@Model.ClassName</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.StudentName</li>
+        </ol></nav>
+        <h1>Theo dõi kết quả học sinh</h1>
+        <p class="skill-name">@Model.StudentName <small class="skill-code">@Model.StudentCode</small></p>
+        <p>Lớp: <strong>@Model.ClassName</strong> · @Model.TotalAssessments đợt đánh giá</p>
+        <p class="analysis-note">Các đợt đánh giá có thể sử dụng đề khác nhau. Kết quả được trình bày để đối chiếu từng lần đánh giá.</p>
+    </header>
+    <section class="analysis-section" aria-labelledby="progress-assessments-title">
+        <h2 id="progress-assessments-title">Các lần đánh giá</h2>
+        @if (Model.Assessments.Count == 0)
+        {
+            <p class="analysis-empty">@(Model.TotalAssessments == 0 ? "Chưa có đợt đánh giá phù hợp với thời gian học sinh tham gia lớp." : "Trang này không có đợt đánh giá. Hãy quay về trang đầu.")</p>
+        }
+        else
+        {
+            <div class="table-responsive" role="region" aria-labelledby="progress-assessments-title" tabindex="0">
+                <table class="table table-striped align-middle"><thead><tr>
+                    <th scope="col">Ngày</th><th scope="col">Đợt đánh giá</th><th scope="col">Đề kiểm tra</th>
+                    <th scope="col">Điểm đã ghi nhận</th><th scope="col">Số câu có dữ liệu / Tổng câu</th><th scope="col">Chi tiết</th>
+                </tr></thead><tbody>
+                @foreach (var row in Model.Assessments)
+                {
+                    <tr data-assessment-id="@row.Id">
+                        <td>@row.Date.ToString("dd/MM/yyyy")</td><th scope="row">@row.Name</th><td>@row.TestName</td>
+                        <td>@(row.Score?.ToString("0.##", culture) ?? "Chưa có kết quả")</td>
+                        <td>@if (row.Overall.HasAttempt) { <span>@row.Overall.ResponseCount / @row.Overall.QuestionCount</span> }
+                            else { <span>Chưa có kết quả · @row.Overall.QuestionCount câu trong đề</span> }</td>
+                        <td><a asp-route="IndividualDiagnosis" asp-route-assessmentId="@row.Id" asp-route-studentId="@Model.StudentId">Xem bài đánh giá<span class="visually-hidden"> @row.Name</span></a></td>
+                    </tr>
+                }
+                </tbody></table>
+            </div>
+        }
+    </section>
+    <section class="analysis-section" aria-labelledby="progress-skills-title">
+        <h2 id="progress-skills-title">Đối chiếu theo nội dung kiến thức</h2>
+        @if (Model.Subskills.Count == 0)
+        {
+            <p class="analysis-empty">Chưa có nội dung kiến thức để đối chiếu.</p>
+        }
+        else
+        {
+            <form method="get" asp-route="StudentProgress" asp-route-classId="@Model.ClassId" asp-route-studentId="@Model.StudentId" class="participation-filter">
+                <div class="progress-skill-filter"><label for="progress-subskill" class="form-label">Nội dung kiến thức</label>
+                    <select id="progress-subskill" class="form-select" name="subskillId" required>
+                        <option value="">Chọn nội dung để đối chiếu</option>
+                        @foreach (var skill in Model.Subskills)
+                        { <option value="@skill.Id" selected="@(Model.SubskillId == skill.Id)">@skill.Code · @skill.Name</option> }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">Xem kết quả</button>
+            </form>
+            @if (Model.SelectedSubskill is {} selected)
+            {
+                <h3>@selected.Name <small class="skill-code">@selected.Code</small></h3>
+                <div class="table-responsive" role="region" aria-labelledby="progress-skills-title" tabindex="0">
+                    <table class="table table-striped align-middle"><thead><tr>
+                        <th scope="col">Ngày</th><th scope="col">Đợt đánh giá</th><th scope="col">Đúng / Số câu có dữ liệu</th>
+                        <th scope="col">Tổng câu trong đề</th><th scope="col">Tỷ lệ đúng</th><th scope="col">Ghi nhận</th>
+                    </tr></thead><tbody>
+                    @foreach (var row in Model.Assessments)
+                    {
+                        var m = row.SelectedSkill!;
+                        <tr data-skill-assessment-id="@row.Id">
+                            <td>@row.Date.ToString("dd/MM/yyyy")</td><th scope="row">@row.Name</th>
+                            <td>@(m.AccuracyPercentage.HasValue ? $"{m.CorrectCount} / {m.ResponseCount}" : "—")</td>
+                            <td>@m.QuestionCount</td><td>@(m.AccuracyPercentage?.ToString("0.##", culture) is string pct ? pct + "%" : "—")</td>
+                            <td>@m.Status @if (m.HasLimitedEvidence) { <small class="d-block analysis-note">Số câu còn ít; cần thêm kết quả để nhận định.</small> }</td>
+                        </tr>
+                    }
+                    </tbody></table>
+                </div>
+            }
+            else
+            { <p class="analysis-empty">Chọn một nội dung kiến thức để xem kết quả của từng lần đánh giá.</p> }
+        }
+    </section>
+    @if (Model.TotalAssessments > 0)
+    {
+        <nav aria-label="Phân trang các lần đánh giá" class="d-flex flex-wrap gap-3 align-items-center">
+            <span>Trang @Model.Page / @Model.TotalPages</span>
+            @if (Model.Page > 1)
+            {
+                <a asp-route="StudentProgress" asp-route-classId="@Model.ClassId" asp-route-studentId="@Model.StudentId" asp-route-subskillId="@Model.SubskillId" asp-route-page="1">Trang đầu</a>
+                @if (Model.Page <= Model.TotalPages)
+                { <a asp-route="StudentProgress" asp-route-classId="@Model.ClassId" asp-route-studentId="@Model.StudentId" asp-route-subskillId="@Model.SubskillId" asp-route-page="@(Model.Page - 1)">Trang trước</a> }
+            }
+            @if (Model.Page < Model.TotalPages)
+            { <a asp-route="StudentProgress" asp-route-classId="@Model.ClassId" asp-route-studentId="@Model.StudentId" asp-route-subskillId="@Model.SubskillId" asp-route-page="@(Model.Page + 1)">Trang sau</a> }
+        </nav>
+    }
+</div>

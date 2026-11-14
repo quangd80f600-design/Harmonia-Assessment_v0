@@ -1,0 +1,4 @@
+@if (ViewData["InterventionAssessmentId"] is long assessmentId)
+{
+    <p class="mt-3"><a class="btn btn-outline-secondary btn-sm" asp-controller="Interventions" asp-action="Create" asp-route-assessmentId="@assessmentId">Tạo gói can thiệp cho đợt này</a></p>
+}

@@ -1,0 +1,10 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using Harmonia.Web.ViewModels
+<section class="dashboard-section" aria-labelledby="dashboard-classes-title">
+    <div class="dashboard-section-title"><h2 id="dashboard-classes-title">@(Model.IsManager ? "Lớp học" : "Lớp đang phụ trách")</h2><a asp-controller="Classes" asp-action="Index">Xem tất cả lớp</a></div>
+    @if(Model.UnassignedClasses is > 0){<p class="dashboard-notice">Lớp chưa có phân công hiện tại: <strong>@Model.UnassignedClasses</strong>. <a asp-controller="Teachers" asp-action="Index">Kiểm tra phân công</a></p>}
+    @if(Model.ClassRows.Count == 0){
+        <p class="dashboard-empty">@(Model.IsManager ? "Chưa có lớp học. Tạo lớp và phân công giáo viên để bắt đầu." : "Bạn chưa có lớp được phân công hiện tại. Liên hệ quản lý học thuật để kiểm tra phân công.")</p>
+        @if(Model.CanCreateClass){<a class="btn btn-outline-primary" asp-controller="Classes" asp-action="Create">Tạo lớp học</a>}
+    }else{<div class="dashboard-class-grid">@foreach(var c in Model.ClassRows){<article class="dashboard-class-card"><span class="dashboard-eyebrow">Khối @c.Grade · @c.AcademicYear</span><h3><a asp-controller="Classes" asp-action="Details" asp-route-id="@c.Id">@c.Name</a></h3><p class="text-muted small">@c.Code · @DashboardText.Status(c.Status)</p><p><strong>@c.Students</strong> học sinh hiện tại</p></article>}</div>}
+</section>

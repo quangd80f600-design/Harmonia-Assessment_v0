@@ -1,0 +1,121 @@
+@model Harmonia.Web.ViewModels.AssessmentParticipationViewModel
+@using Harmonia.Web.ViewModels
+@using System.Globalization
+@{
+    ViewData["Title"] = "Tổng quan đợt đánh giá";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var visible = Model.VisibleStudents.ToList();
+}
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Danh sách đợt đánh giá</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tổng quan đợt đánh giá</li>
+        </ol></nav>
+        <h1>Tổng quan đợt đánh giá</h1>
+        <p class="analysis-description">Theo dõi việc ghi nhận kết quả của học sinh thuộc lớp tại ngày đánh giá.</p>
+        <partial name="_AnalysisContext" model="Model.Assessment" />
+        <a class="btn btn-outline-secondary btn-sm" asp-action="SubskillSummary" asp-route-id="@Model.Assessment.AssessmentId">Phân tích nội dung kiến thức / Soạn phiếu cho nhóm →</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-controller="AssessmentImports" asp-action="Index" asp-route-id="@Model.Assessment.AssessmentId">Nhập kết quả CSV</a>
+        @if(ViewData["InterventionAssessmentId"] is long groupingAssessment && Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.WorksheetOptions>>()?.Value.Enabled==true){<p class="mt-3"><a class="btn btn-primary" asp-controller="Worksheets" asp-action="ExactGroups" asp-route-assessmentId="@groupingAssessment">Tự chia nhóm ôn tập</a></p>}
+        <partial name="_InterventionNextStep" />
+    </header>
+    @if(TempData["FollowupPlanMessage"] is string planMessage){<p class="alert alert-success" role="status">@planMessage</p>}
+    @if(Model.FollowupPlan is { } plan){
+        <section class="analysis-section" aria-labelledby="overview-planned-title"><h2 id="overview-planned-title">Ngày dự kiến đánh giá lại</h2><p>@(plan.PlannedFollowupDate?.ToString("dd/MM/yyyy") ?? "Chưa ghi nhận ngày dự kiến đánh giá lại.")</p><p class="analysis-note">Ngày dự kiến dùng để nhắc lịch; không tự tạo hoặc xác nhận hoàn tất đợt đánh giá lại.</p>@if(plan.CanEdit){<a class="btn btn-outline-primary" asp-controller="AssessmentFollowupPlans" asp-action="Edit" asp-route-id="@plan.AssessmentId">@(plan.PlannedFollowupDate.HasValue ? "Sửa ngày dự kiến" : "Thêm ngày dự kiến")</a>}</section>
+    }
+    <section class="analysis-section" aria-labelledby="participation-heading">
+        <h2 id="participation-heading"><span class="section-number">01.</span> Tình hình ghi nhận kết quả</h2>
+        <div class="analysis-metrics">
+            <div><span>Học sinh thuộc lớp</span><strong>@Model.ExpectedStudents</strong></div>
+            <div><span>Đã có kết quả</span><strong>@Model.RecordedStudents</strong></div>
+            <div><span>Chưa có kết quả</span><strong>@Model.MissingStudents</strong></div>
+            <div><span>Tỷ lệ ghi nhận</span><strong>@(Model.RecordingPercentage is decimal pct ? pct.ToString("0.##", culture) + "%" : "Chưa có dữ liệu")</strong></div>
+        </div>
+        <div class="participation-progress my-3">
+            <p id="recording-progress-label" class="mb-2">Tiến độ ghi nhận kết quả</p>
+            @if (Model.RecordingPercentage is decimal progress)
+            {
+                var progressText = $"{Model.RecordedStudents}/{Model.ExpectedStudents} học sinh — {progress.ToString("0.##", culture)}%";
+                <p class="fw-semibold mb-2">@progressText</p>
+                <div class="progress" role="progressbar" aria-labelledby="recording-progress-label"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="@progress.ToString(CultureInfo.InvariantCulture)"
+                     aria-valuetext="@progressText">
+                    <div class="progress-bar" style="width: @(progress.ToString(CultureInfo.InvariantCulture))%"></div>
+                </div>
+            }
+            else
+            {
+                <p class="analysis-note mb-0">Chưa có học sinh hợp lệ để xác định tiến độ ghi nhận kết quả.</p>
+            }
+        </div>
+        <p class="analysis-note mb-0">Sĩ số gồm học sinh thuộc lớp vào ngày đánh giá, tính từ ngày vào lớp đến trước ngày kết thúc tham gia. “Chưa có kết quả” khác với điểm 0. Các số liệu tổng quan không thay đổi khi bạn lọc danh sách bên dưới.</p>
+    </section>
+    <section class="analysis-section" aria-labelledby="students-heading">
+        <h2 id="students-heading"><span class="section-number">02.</span> Danh sách học sinh</h2>
+        <form method="get" asp-action="Overview" asp-route-id="@Model.Assessment.AssessmentId" class="participation-filter">
+            <div>
+                <label for="participation-status" class="form-label">Trạng thái kết quả</label>
+                <select id="participation-status" name="status" class="form-select">
+                    <option value="All" selected="@(Model.StatusFilter == ParticipationStatus.All)">Tất cả</option>
+                    <option value="Missing" selected="@(Model.StatusFilter == ParticipationStatus.Missing)">Chưa có kết quả</option>
+                    <option value="Recorded" selected="@(Model.StatusFilter == ParticipationStatus.Recorded)">Đã có kết quả</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-outline-secondary">Lọc danh sách</button>
+            <p class="analysis-note mb-0" role="status">Hiển thị @visible.Count / @Model.ExpectedStudents học sinh</p>
+        </form>
+        @if (Model.ExpectedStudents == 0)
+        {
+            <p class="analysis-empty">Không có học sinh thuộc lớp tại ngày đánh giá. Tỷ lệ ghi nhận chưa có dữ liệu.</p>
+        }
+        else if (visible.Count == 0)
+        {
+            <p class="analysis-empty">Không có học sinh phù hợp với bộ lọc đã chọn.</p>
+        }
+        else
+        {
+            <div class="table-responsive participation-table">
+                <table class="table table-striped align-middle">
+                    <caption>Danh sách tại ngày đánh giá; học sinh chưa có kết quả được xếp trước. Điểm lấy từ Attempt đã lưu.</caption>
+                    <thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Trạng thái</th><th scope="col">Điểm</th><th scope="col">Đợt nhập kết quả</th></tr></thead>
+                    <tbody>
+                    @foreach (var student in visible)
+                    {
+                        <tr>
+                            <th scope="row">@student.StudentCode</th>
+                            <td>
+                                @if (student.HasResult)
+                                {
+                                    <a asp-route="IndividualDiagnosis" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@student.StudentId">@student.FullName</a>
+                                }
+                                else
+                                {
+                                    @student.FullName
+                                }
+                                @if (ViewData["StudentReportAllowed"] is true)
+                                {
+                                    <div><a asp-route="StudentReport" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@student.StudentId">Báo cáo / In</a></div>
+                                }
+                            </td>
+                            <td><span class="participation-status @(student.HasResult ? "is-recorded" : "is-missing")">@(student.HasResult ? "Đã có kết quả" : "Chưa có kết quả")</span></td>
+                            <td>@if (student.Score is decimal score) { @score.ToString("0.##", culture) } else { <span class="text-muted">Chưa có điểm</span> }</td>
+                            <td>
+                                @if (student.ImportBatchId is long batchId)
+                                {
+                                    <span>@(student.ImportFileName ?? "Chưa có thông tin tệp")</span>
+                                    <small class="skill-code">Batch #@batchId @if (student.ImportStatus is not null) { <span>· @student.ImportStatus</span> }</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa có đợt nhập</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

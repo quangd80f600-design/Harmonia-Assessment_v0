@@ -1,0 +1,49 @@
+@model Harmonia.Web.ViewModels.TeacherDetailsPage
+@{ ViewData["Title"]="Hồ sơ giáo viên"; var manager=User.IsInRole("AcademicManager"); }
+<a asp-action="Index" asp-route-classId="@Model.AssignmentClassContext?.ClassId">@(manager ? "Giáo viên & phân công" : "Hồ sơ và lớp phụ trách")</a><h1 class="h3">@Model.Name</h1><p>@Model.Code · @(Model.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</p><p>@Model.Email · @Model.Phone</p>
+@if(TempData["TeacherMessage"] is string message){<p role="status" class="alert alert-info">@message</p>}
+<section class="analysis-section" aria-labelledby="teacher-classes-title">
+<h2 id="teacher-classes-title">Lớp phụ trách và lịch sử phân công</h2>
+<p class="analysis-note">Hiệu lực tại ngày @Harmonia.Web.Services.AcademicManagementService.Today.ToString("dd/MM/yyyy"). Ngày kết thúc không nằm trong khoảng phân công.</p>
+@if (Model.Assignments.Count == 0) { <p class="analysis-empty">Chưa có phân công.</p> }
+@foreach (var phase in new[] { "Đang phụ trách", "Sắp bắt đầu", "Đã kết thúc" })
+{
+    var items = Model.Assignments.Where(a => Harmonia.Web.ViewModels.AssignmentDates.Label(a.StartDate, a.EndDate, Harmonia.Web.Services.AcademicManagementService.Today) == phase).ToArray();
+    @if (items.Length > 0)
+    {
+        <details class="mb-3" open="@(phase == "Đang phụ trách")" data-assignment-phase="@phase"><summary><strong>@phase</strong> · @items.Length phân công</summary>
+            <div class="table-responsive mt-2"><table class="table"><thead><tr><th>Lớp</th><th>Năm học</th><th>Từ ngày</th><th>Đến trước ngày</th></tr></thead><tbody>
+            @foreach (var assignment in items)
+            {
+                <tr><th scope="row">@if (assignment.CanOpenClass) { <a asp-controller="Classes" asp-action="Details" asp-route-id="@assignment.ClassId">@assignment.ClassName</a> } else { @assignment.ClassName <small class="d-block text-muted">Ngoài phạm vi truy cập lớp hiện tại</small> }</th><td>@assignment.AcademicYear</td><td>@assignment.StartDate.ToString("dd/MM/yyyy")</td><td>@(assignment.EndDate?.ToString("dd/MM/yyyy") ?? "Không giới hạn")</td></tr>
+            }
+            </tbody></table></div>
+        </details>
+    }
+}
+</section>
+@if (manager) {
+<section class="analysis-section" id="assignment-form">
+<h2>Thêm phân công</h2>
+<partial name="_AssignmentForm" model="Model" />
+</section>
+<h2 class="h5">Tài khoản giáo viên</h2>
+@if(!Model.HasAccount){
+@if (Model.CanLinkOwnManager) {
+    <div class="alert alert-info">Bạn có thể dùng tài khoản quản lý hiện tại cho hồ sơ này, không cần tạo tài khoản thứ hai.</div>
+    <form asp-action="LinkMyAccount" asp-route-id="@Model.Id" method="post" class="mb-4" data-link-my-account>
+        <label class="d-block mb-2"><input type="checkbox" name="confirmed" value="true" required /> Tôi xác nhận @Model.Code — @Model.Name là hồ sơ giáo viên của mình.</label>
+        <button class="btn btn-primary">Liên kết với tài khoản quản lý của tôi</button>
+        <p class="analysis-note">Sau khi liên kết, bạn cần đăng nhập lại. Quyền quản lý, mật khẩu và dữ liệu lịch sử được giữ nguyên.</p>
+    </form>
+}
+<form asp-action="Account" asp-route-id="@Model.Id" method="post" style="max-width:500px"><label for="UserName">Tên đăng nhập</label><input name="UserName" id="UserName" class="form-control mb-2" autocomplete="off" maxlength="100" required /><label for="TemporaryPassword">Mật khẩu tạm (ít nhất 12 ký tự, đủ hoa/thường/số/ký tự đặc biệt)</label><input name="TemporaryPassword" id="TemporaryPassword" type="password" class="form-control mb-2" autocomplete="new-password" minlength="12" maxlength="128" required /><button class="btn btn-primary">Tạo và liên kết tài khoản</button></form>
+}else{
+<p>Tên đăng nhập: @Model.UserName</p><p>@(Model.AccountActive?"Tài khoản đang bật":"Tài khoản đã khóa")</p>
+@if (Model.AccountIsManager) {
+    <p class="alert alert-info" data-protected-manager>Tài khoản quản lý kiêm giáo viên. Không khóa hoặc đặt lại mật khẩu qua chức năng quản lý giáo viên.</p>
+    @if (Model.IsOwnAccount) { <a asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu của tôi</a> }
+} else {
+<form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post" style="max-width:500px"><label for="TemporaryPassword">Mật khẩu tạm mới</label><input name="TemporaryPassword" id="TemporaryPassword" type="password" class="form-control mb-2" autocomplete="new-password" minlength="12" maxlength="128" required /><button class="btn btn-outline-primary">Đặt lại mật khẩu</button></form>
+<form asp-action="AccountStatus" asp-route-id="@Model.Id" method="post" class="mt-3"><input type="hidden" name="active" value="@(!Model.AccountActive ? "true":"false")" /><button class="btn btn-outline-danger">@(Model.AccountActive?"Khóa tài khoản":"Mở tài khoản")</button></form>
+}}}

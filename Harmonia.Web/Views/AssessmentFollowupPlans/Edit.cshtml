@@ -1,0 +1,39 @@
+@model Harmonia.Web.ViewModels.AssessmentFollowupPlanPage
+@{ ViewData["Title"] = "Ngày dự kiến đánh giá lại"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <a asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.Summary.AssessmentId">Trở về đợt đánh giá</a>
+        <h1>Ngày dự kiến đánh giá lại</h1>
+        <p>@Model.Summary.AssessmentName · @Model.Summary.ClassName</p>
+        <p>Ngày đánh giá ban đầu: @Model.Summary.AssessmentDate.ToString("dd/MM/yyyy")</p>
+        <p class="analysis-note">Lịch chung cho đợt đánh giá này. Lưu ngày chỉ tạo lời nhắc trên Tổng quan công việc; chưa tạo đợt đánh giá lại.</p>
+    </header>
+    <section class="analysis-section">
+    @if(!Model.Summary.CanEdit)
+    {
+        <p>Ngày dự kiến: @(Model.Summary.PlannedFollowupDate?.ToString("dd/MM/yyyy") ?? "Chưa ghi nhận")</p>
+        <p class="analysis-note">Bạn đang xem lịch. Chỉnh sửa cần quyền ghi với đợt đánh giá đang mở hoặc đã hoàn tất.</p>
+    }
+    else
+    {
+        <form asp-action="Edit" asp-route-id="@Model.Summary.AssessmentId" method="post" id="followup-plan-form">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <input asp-for="Input.ExpectedVersion" type="hidden" />
+            <div class="mb-3">
+                <label asp-for="Input.PlannedFollowupDate" class="form-label">Ngày dự kiến đánh giá lại</label>
+                <input asp-for="Input.PlannedFollowupDate" type="date" class="form-control" aria-describedby="planned-date-help" />
+                <span asp-validation-for="Input.PlannedFollowupDate" class="text-danger"></span>
+                <p id="planned-date-help" class="analysis-note">Chọn ngày sau ngày đánh giá ban đầu. Nếu muốn gỡ lịch, dùng Xóa ngày dự kiến.</p>
+            </div>
+            <button name="Input.Operation" value="Save" type="submit" class="btn btn-primary">Lưu ngày dự kiến</button>
+            @if(Model.Summary.PlannedFollowupDate.HasValue)
+            {
+                <div class="mt-4 border-top pt-3">
+                    <label><input asp-for="Input.ConfirmClear" /> Chỉ xóa lời nhắc; giữ nguyên đợt đánh giá và kết quả.</label>
+                    <button name="Input.Operation" value="Clear" type="submit" class="btn btn-outline-danger">Xóa ngày dự kiến</button>
+                </div>
+            }
+        </form>
+    }
+    </section>
+</div>

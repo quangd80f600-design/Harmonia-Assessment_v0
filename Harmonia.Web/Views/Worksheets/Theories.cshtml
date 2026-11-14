@@ -1,0 +1,45 @@
+@model Harmonia.Web.ViewModels.TheoryPage
+@{
+    ViewData["Title"]="Kho lý thuyết";
+    var f=Model.Filter;
+    var formOpen=Model.Id.HasValue || ViewData["OpenTheoryForm"] is true || !ViewData.ModelState.IsValid;
+    var units=Model.Skills.Where(s=>!f.Grade.HasValue || s.Grade==f.Grade).GroupBy(s=>s.UnitId).Select(g=>g.First()).OrderBy(s=>s.Grade).ThenBy(s=>s.UnitNumber);
+    var areas=Model.Skills.Where(s=>(!f.Grade.HasValue || s.Grade==f.Grade) && (!f.UnitId.HasValue || s.UnitId==f.UnitId)).GroupBy(s=>s.AreaId).Select(g=>g.First());
+    var skills=Model.Skills.Where(s=>(!f.Grade.HasValue || s.Grade==f.Grade) && (!f.UnitId.HasValue || s.UnitId==f.UnitId) && (!f.AreaId.HasValue || s.AreaId==f.AreaId));
+}
+<div class="analysis-page">
+<header class="analysis-header"><h1>Kho lý thuyết</h1>
+<p>Xem và chuẩn bị lý thuyết theo nội dung kiến thức, không cần chọn đợt đánh giá hoặc học sinh.</p>
+<p><a asp-controller="Authoring" asp-action="Questions" asp-route-UsagePurpose="ForIntervention">Câu hỏi luyện tập</a> · <a asp-controller="Interventions" asp-action="Index">Gói can thiệp và phiếu đã lưu</a></p>
+<p>Để soạn phiếu từ kết quả: vào Đợt đánh giá → xem kết quả cá nhân hoặc phân tích nội dung kiến thức → Soạn phiếu bổ trợ.</p></header>
+@if(TempData["WorksheetMessage"] is string message){<p role="status" class="alert alert-success">@message</p>}
+@if(Model.FilterNotice is string notice){<p role="status" class="alert alert-info">@notice</p>}
+<form method="get" asp-action="Theories" class="analysis-section" data-theory-filter>
+<h2>Tìm lý thuyết</h2><div class="row g-3">
+<div class="col-md-3"><label for="theory-grade">Khối</label><select id="theory-grade" name="Grade" class="form-select"><option value="">Tất cả khối</option>@foreach(var grade in Model.Skills.Select(s=>s.Grade).Distinct().Order()){<option value="@grade" selected="@(f.Grade==grade)">Khối @grade</option>}</select></div>
+<div class="col-md-3"><label for="theory-unit">Bài học (Unit)</label><select id="theory-unit" name="UnitId" class="form-select"><option value="">Tất cả bài học</option>@foreach(var s in units){<option value="@s.UnitId" selected="@(f.UnitId==s.UnitId)">Khối @s.Grade · Unit @s.UnitNumber — @s.UnitName</option>}</select></div>
+<div class="col-md-3"><label for="theory-area">Mảng kiến thức</label><select id="theory-area" name="AreaId" class="form-select"><option value="">Tất cả mảng kiến thức</option>@foreach(var s in areas){<option value="@s.AreaId" selected="@(f.AreaId==s.AreaId)">@s.AreaName</option>}</select></div>
+<div class="col-md-3"><label for="theory-skill">Nội dung kiến thức</label><select id="theory-skill" name="SubskillId" class="form-select"><option value="">Tất cả nội dung</option>@foreach(var s in skills){<option value="@s.Id" selected="@(f.SubskillId==s.Id)">@s.Name · @s.Code</option>}</select></div>
+<div class="col-md-8"><label for="theory-search">Từ khóa</label><input id="theory-search" name="Search" value="@f.Search" maxlength="100" class="form-control" placeholder="Tên lý thuyết, nội dung hoặc mã kiến thức" /></div>
+<div class="col-md-4 d-flex gap-2 align-items-end"><button class="btn btn-primary">Tìm / Lọc</button><a class="btn btn-outline-secondary" asp-action="Theories">Bỏ bộ lọc</a></div>
+</div><p class="mt-3 mb-0" role="status">Tìm thấy @Model.Rows.Count mục lý thuyết.</p></form>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(Model.CanWrite){
+<details class="analysis-section" id="theory-editor" open="@formOpen"><summary class="h5">@(Model.Id.HasValue?"Sửa lý thuyết":"Thêm lý thuyết")</summary>
+<p class="mt-3">Lý thuyết dùng chung; các phiếu đã lưu giữ nguyên nội dung của lần lưu đó.</p>
+<form asp-action="Theories" asp-route-theoryId="@Model.Id" method="post">
+<input asp-for="Input.Version" type="hidden"/>
+<label asp-for="Input.SubskillId">Nội dung kiến thức</label><select asp-for="Input.SubskillId" class="form-select"><option value="">Chọn nội dung kiến thức</option>@foreach(var s in Model.Skills){<option value="@s.Id">Khối @s.Grade · Unit @s.UnitNumber · @s.Name · @s.Code</option>}</select>
+<label asp-for="Input.Title">Tiêu đề</label><input asp-for="Input.Title" class="form-control" maxlength="200"/>
+<label asp-for="Input.Content">Lý thuyết</label><textarea asp-for="Input.Content" class="form-control" rows="10" maxlength="20000"></textarea><p>Nhập văn bản; xuống dòng để chia ý. Không nhập HTML.</p>
+<label asp-for="Input.Status">Trạng thái</label><select asp-for="Input.Status" class="form-select"><option value="Active">Đang hoạt động</option><option value="Inactive">Ngừng hoạt động</option></select>
+<button class="btn btn-primary mt-3">@(Model.Id.HasValue?"Lưu thay đổi":"Thêm lý thuyết")</button>
+</form></details>}
+<section aria-labelledby="theory-list-heading"><h2 id="theory-list-heading">Danh sách lý thuyết</h2>
+@if(Model.Rows.Count==0){<p>Chưa có lý thuyết phù hợp. Hãy đổi bộ lọc hoặc bổ sung nội dung.</p>}
+@foreach(var t in Model.Rows){var skill=Model.Skills.FirstOrDefault(s=>s.Id==t.SubskillId);
+<details class="analysis-section" data-theory-row><summary><strong>@t.Title</strong> · @(skill?.Name ?? "Nội dung đã lưu") · @(t.Status=="Active"?"Đang hoạt động":"Ngừng hoạt động")</summary>
+@if(skill is not null){<p class="analysis-note mt-2">Khối @skill.Grade → Unit @skill.UnitNumber — @skill.UnitName → @skill.AreaName → @skill.Name (@skill.Code)</p>}
+<p style="white-space:pre-wrap">@t.Content</p>@if(User.IsInRole("AcademicManager")){<a asp-action="Theories" asp-route-theoryId="@t.Id">Sửa lý thuyết</a>}</details>}
+</section></div>
+@section Scripts{<script src="~/js/theory-browse.js" asp-append-version="true"></script>}

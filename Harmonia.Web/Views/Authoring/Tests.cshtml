@@ -1,0 +1,5 @@
+@model IReadOnlyList<Harmonia.Web.ViewModels.TestListRow>
+@{ ViewData["Title"] = "Quản lý đề"; }
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Index">Câu hỏi &amp; đề</a><h1>Quản lý đề</h1><p class="analysis-description">Tạo và chỉnh sửa đề nháp, xem nội dung, phát hành hoặc sao chép thành đề mới.</p><a class="btn btn-outline-secondary" asp-action="CreateTest">Soạn đề mới</a></header>
+    <section class="analysis-section"><div class="table-responsive"><table class="table table-striped"><thead><tr><th scope="col">Tên đề</th><th scope="col">Trạng thái</th><th scope="col">Số câu</th><th scope="col">Đợt sử dụng</th></tr></thead><tbody>@foreach (var t in Model) { <tr><th scope="row"><a asp-action="Test" asp-route-id="@t.Id">@t.Name</a></th><td data-test-status="@t.Status">@(t.Status switch { "Draft" => "Nháp", "Published" => "Đã phát hành", "Archived" => "Đã lưu trữ", _ => "Chưa xác định" })</td><td>@t.QuestionCount câu</td><td>@t.AssessmentCount đợt</td></tr> }</tbody></table></div>@if (Model.Count == 0) { <p class="analysis-empty">Chưa có đề.</p> }</section>
+</div>

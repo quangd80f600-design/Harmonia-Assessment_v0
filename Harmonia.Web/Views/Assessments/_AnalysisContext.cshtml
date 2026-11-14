@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.AssessmentHeader
+<dl class="analysis-context">
+    <div><dt>Lớp</dt><dd>@Model.ClassName</dd></div>
+    <div><dt>Đợt đánh giá</dt><dd>@Model.AssessmentName</dd></div>
+    <div><dt>Ngày đánh giá</dt><dd>@Model.AssessmentDate.ToString("dd/MM/yyyy")</dd></div>
+    <div><dt>Đề</dt><dd>@Model.TestName</dd></div>
+</dl>

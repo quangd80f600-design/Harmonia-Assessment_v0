@@ -1,0 +1,9 @@
+@model Harmonia.Web.ViewModels.TeacherInput
+@{ ViewData["Title"]="Tạo hồ sơ giáo viên"; }
+<h1 class="h3">Tạo hồ sơ giáo viên</h1><p>Tạo hồ sơ trước; tài khoản đăng nhập được liên kết sau.</p>
+<form method="post" asp-action="Create" style="max-width:600px"><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label asp-for="TeacherCode">Mã giáo viên</label><input asp-for="TeacherCode" class="form-control mb-3" maxlength="50" />
+<label asp-for="FullName">Họ tên</label><input asp-for="FullName" class="form-control mb-3" maxlength="150" />
+<label asp-for="Email">Email</label><input asp-for="Email" class="form-control mb-3" maxlength="150" />
+<label asp-for="PhoneNumber">Số điện thoại</label><input asp-for="PhoneNumber" class="form-control mb-3" maxlength="20" />
+<button class="btn btn-primary">Tạo hồ sơ</button></form>

@@ -1,0 +1,6 @@
+@model Harmonia.Web.ViewModels.ObservationSelect
+<select name="@Model.Name" class="form-select observation-choice" disabled="@(!Model.Enabled)" aria-label="@Model.Label" data-original="@(Model.Value ?? "")">
+    <option value="">Chưa đủ thông tin</option>
+    @foreach (var choice in Model.Choices)
+    { <option value="@choice.Code" selected="@(choice.Code == Model.Value)">@choice.Label</option> }
+</select>

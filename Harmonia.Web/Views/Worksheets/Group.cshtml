@@ -1,0 +1,35 @@
+@model Harmonia.Web.ViewModels.WorksheetGroupPage
+@using System.Globalization
+@{ViewData["Title"]="Soạn phiếu bổ trợ cho nhóm";ViewData["GroupWorksheet"]=true;var input=(Harmonia.Web.ViewModels.WorksheetGroupInput)Model.Content.Input;var skill=Model.Content.Skills[0];}
+<div class="analysis-page">
+<a asp-controller="Assessments" asp-action="SubskillSummary" asp-route-id="@Model.Content.AssessmentId">Quay lại phân tích lớp</a>
+<h1>Soạn phiếu bổ trợ cho nhóm</h1><p>@Model.ClassName · @Model.Content.AssessmentName · @string.Join(" · ",Model.Content.Skills.Select(s=>s.Name))</p>
+<p>Chọn người nhận → chọn lý thuyết và câu luyện tập → lưu nháp → kiểm tra và xác nhận giao → in phiếu. Mọi học sinh trong nhóm nhận cùng toàn bộ phiếu.</p>
+<form asp-action="Group" asp-route-assessmentId="@Model.Content.AssessmentId" asp-route-subskillId="@skill.Id" method="get" class="analysis-section" data-group-filter>
+<p><a asp-action="ExactGroups" asp-route-assessmentId="@Model.Content.AssessmentId">Tự chia nhóm theo đúng tập nội dung sai</a></p>
+<h2>Chọn nội dung cần ôn tập</h2>
+@foreach(var available in Model.AvailableSkills){<label class="d-block"><input type="checkbox" name="subskillIds" value="@available.Id" checked="@Model.Content.Skills.Any(s=>s.Id==available.Id)" /> @available.Name</label>}
+<label for="group-match">Gợi ý người nhận</label><select name="match" id="group-match" class="form-select"><option value="Exact" selected="@(input.MatchMode=="Exact")">Sai đúng các nội dung đã chọn, không sai nội dung khác</option><option value="Any" selected="@(input.MatchMode=="Any")">Sai ít nhất một nội dung đã chọn</option><option value="All" selected="@(input.MatchMode=="All")">Sai tất cả nội dung đã chọn</option></select>
+<p>Đổi bộ lọc sẽ tải lại danh sách gợi ý. Nếu đang soạn, hãy ở lại để lưu nháp; lựa chọn chưa lưu không được tự chuyển sang bộ lọc mới.</p><button class="btn btn-outline-primary" type="submit">Xem nhóm học sinh</button>
+</form>
+<p>Tỷ lệ sai theo S2: <strong>@(Model.ClassErrorPercentage is decimal p?p.ToString("0.##",CultureInfo.GetCultureInfo("vi-VN"))+"%":"Chưa có dữ liệu")</strong>. Danh sách dưới đây gồm học sinh thuộc lớp vào ngày đánh giá, @(input.MatchMode=="Exact"?"đã có đủ câu trả lời và có câu sai ở đúng các nội dung đã chọn, không có câu sai ở nội dung khác":input.MatchMode=="All"?"có ít nhất một câu sai trong từng nội dung đang chọn":"có ít nhất một câu sai trong các nội dung đang chọn").</p>
+<p>@Model.RosterCount học sinh thuộc lớp · @Model.MissingAttemptCount chưa có kết quả · @Model.IncompleteResponseCount đã có kết quả nhưng thiếu dữ liệu trả lời cho nội dung này. Dữ liệu thiếu không được tính là sai.</p>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(Model.Students.Count==0){<p class="analysis-empty">Chưa có học sinh có câu sai được ghi nhận ở nội dung này để soạn phiếu nhóm.</p>}
+else{
+<form asp-action="Group" asp-route-assessmentId="@Model.Content.AssessmentId" asp-route-subskillId="@skill.Id" method="post" id="worksheet-form">
+@foreach(var selected in Model.Content.Skills){<input type="hidden" name="Input.SubskillIds" value="@selected.Id"/>}
+<input type="hidden" name="Input.MatchMode" value="@input.MatchMode"/>
+<input type="hidden" name="Input.Version" value="@Model.Content.Input.Version"/><input type="hidden" name="submissionToken" value="@ViewData["SubmissionToken"]"/>
+<section class="analysis-section"><h2>01. Chọn người nhận (@Model.Students.Count)</h2><p>Chọn tối đa 200 học sinh. Mọi người nhận cùng toàn bộ nội dung phiếu; lưu nháp chưa phải giao.</p>
+<button type="button" id="group-select-all" class="btn btn-outline-secondary btn-sm">Chọn tất cả nhóm được gợi ý</button>
+<button type="button" id="group-clear" class="btn btn-outline-secondary btn-sm">Bỏ chọn tất cả</button>
+<div class="table-responsive mt-3"><table class="table"><thead><tr><th>Chọn</th><th>Học sinh</th><th>Đúng / câu đã ghi nhận</th><th>Số câu sai</th>@foreach(var selected in Model.Content.Skills){<th>@selected.Name</th>}</tr></thead><tbody>
+@foreach(var s in Model.Students){<tr><td><input type="checkbox" name="Input.StudentIds" value="@s.StudentId" id="recipient-@s.StudentId" class="group-recipient" checked="@input.StudentIds.Contains(s.StudentId)" aria-label="Chọn @s.FullName"/></td><th scope="row"><label for="recipient-@s.StudentId">@s.StudentCode · @s.FullName</label></th><td>@s.CorrectCount / @s.ResponseCount@if(s.ResponseCount<s.QuestionCount){<small class="d-block">Chưa đủ @s.QuestionCount câu trong đề</small>}</td><td>@(s.ResponseCount-s.CorrectCount)</td>@foreach(var selected in Model.Content.Skills){var cell=s.Cells.Single(c=>c.SubskillId==selected.Id);<td>@if(cell.ResponseCount==0){<span>Chưa ghi nhận</span>}else{<span>@(cell.ResponseCount-cell.CorrectCount) sai / @cell.ResponseCount câu đã chấm</span>@if(cell.ResponseCount<cell.QuestionCount){<small class="d-block">Còn câu chưa ghi nhận</small>}}</td>}</tr>}
+</tbody></table></div><p id="group-recipient-count" role="status"></p></section>
+<section class="analysis-section"><h2>02. Nội dung phiếu chung</h2><partial name="_ContentFields" model="Model.Content" /></section>
+<p id="worksheet-count" role="status"></p><button class="btn btn-primary" id="worksheet-save" disabled>Lưu nháp và kiểm tra nhóm nhận</button>
+<noscript><p>Vui lòng bật JavaScript để chọn nội dung phiếu.</p></noscript>
+</form>}
+</div>
+@section Scripts{<script src="~/js/worksheet-compose.js" asp-append-version="true"></script>}

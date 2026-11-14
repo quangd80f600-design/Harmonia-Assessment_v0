@@ -1,0 +1,66 @@
+@model Harmonia.Web.ViewModels.ImportPreviewViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Xem trước kết quả nhập";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.Page.Assessment.AssessmentId">Tổng quan đợt đánh giá</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-id="@Model.Page.Assessment.AssessmentId">Nhập CSV</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Xem trước</li>
+        </ol></nav>
+        <h1>Xem trước kết quả nhập</h1>
+        <p class="analysis-description">Đã kiểm tra cấu trúc file và điều kiện nhập. Chưa có dữ liệu được lưu.</p>
+        <partial name="~/Views/Assessments/_AnalysisContext.cshtml" model="Model.Page.Assessment" />
+        <p class="analysis-note">Tệp: @Model.FileName · @Model.Students.Count học sinh · @Model.Page.QuestionCount câu mỗi bài · Người nhập kết quả: @Model.Page.DemoActor</p>
+    </header>
+    <div class="analysis-metrics" aria-label="Tổng quan file kết quả">
+        <div><span>Học sinh trong file</span><strong>@Model.Students.Count</strong></div>
+        <div><span>Câu hỏi mỗi bài</span><strong>@Model.Page.QuestionCount</strong></div>
+        <div><span>Tổng ô bỏ trống</span><strong>@Model.TotalBlank</strong></div>
+        <div><span>Học sinh có ô bỏ trống</span><strong>@Model.StudentsWithBlank</strong></div>
+    </div>
+    <div class="alert alert-warning" role="note" id="assessment-file-warning">
+        Vui lòng xác nhận file kết quả này thuộc đúng đợt đánh giá đang hiển thị. Hệ thống không thể tự nhận biết file của đợt khác nếu hai đề có cùng cấu trúc.
+    </div>
+    <p class="analysis-note">Ô bỏ trống được chấm sai; V0 không phân biệt được sai và bỏ trống sau khi lưu.</p>
+    <section class="analysis-section" aria-labelledby="preview-heading">
+        <h2 id="preview-heading"><span class="section-number">01.</span> Kết quả chấm dự kiến</h2>
+        @if (Model.Students.Any(s => s.Blank > 0))
+        {
+            <p class="analysis-empty">Ô bỏ trống được tính là câu sai và nhận 0 điểm. Số câu sai đã bao gồm câu bỏ trống. Bài bỏ trống toàn bộ vẫn được ghi nhận kết quả với điểm 0, khác với trường hợp chưa có kết quả.</p>
+        }
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <caption>Điểm thang 10, trọng số các câu bằng nhau, làm tròn hai chữ số. Đáp án đúng lấy từ snapshot.</caption>
+                <thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Số câu</th><th scope="col">Đúng</th><th scope="col">Sai</th><th scope="col">Bỏ trống</th><th scope="col">Điểm</th></tr></thead>
+                <tbody>
+                @foreach (var student in Model.Students)
+                {
+                    <tr><th scope="row">@student.StudentCode</th><td>@student.StudentName</td><td>@student.QuestionCount</td><td>@student.Correct</td><td>@student.Incorrect</td><td>@student.Blank</td><td>@student.Score.ToString("0.##", culture)</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="analysis-section" aria-labelledby="confirm-heading">
+        <h2 id="confirm-heading"><span class="section-number">02.</span> Xác nhận lưu toàn bộ batch</h2>
+        <p>Trước khi lưu, hệ thống kiểm tra lại dữ liệu. Nếu có học sinh đã có kết quả hoặc nội dung đề đã thay đổi, không nhập kết quả của bất kỳ học sinh nào trong tệp.</p>
+        <p class="analysis-note">Preview có hiệu lực đến @Model.ExpiresAt.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm") (giờ Việt Nam). Bản demo không lưu lựa chọn học sinh hoặc file CSV gốc; hãy giữ file nguồn để đối chiếu.</p>
+        @if (ViewData["ConfirmError"] is string error)
+        {
+            <p class="text-danger" role="alert">@error</p>
+        }
+        <form asp-action="Confirm" asp-route-id="@Model.Page.Assessment.AssessmentId" method="post">
+            <input type="hidden" name="token" value="@Model.Token" />
+            <div class="form-check mb-3">
+                <input id="confirmed" class="form-check-input" type="checkbox" name="confirmed" value="true" required aria-describedby="assessment-file-warning" />
+                <label for="confirmed" class="form-check-label">Tôi đã kiểm tra và xác nhận file thuộc đúng đợt đánh giá</label>
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Xác nhận nhập kết quả</button>
+            <a class="btn btn-link" asp-action="Index" asp-route-id="@Model.Page.Assessment.AssessmentId">Hủy và chọn file khác</a>
+        </form>
+    </section>
+</div>

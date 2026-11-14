@@ -1,0 +1,33 @@
+@model Harmonia.Web.ViewModels.TaxonomyPage
+@{ ViewData["Title"] = "Cây kiến thức"; }
+<div class="analysis-page">
+    <header class="analysis-header"><a asp-action="Index">Câu hỏi &amp; đề</a><h1>Cây kiến thức</h1><p class="analysis-description">Khối lớp → Bài học → Nhóm kiến thức → Nội dung kiến thức. Chọn một nội dung để xem câu hỏi; danh mục này hiện chỉ hỗ trợ xem và lựa chọn.</p></header>
+    <section class="analysis-section">
+        <form asp-action="Taxonomy" method="get" class="row g-3 align-items-end">
+            <div class="col-sm-4"><label for="grade" class="form-label">Khối</label><select id="grade" name="Grade" class="form-select"><option value="">Tất cả</option>@for (short g = 6; g <= 12; g++) { <option value="@g" selected="@(Model.Filter.Grade == g)">Khối @g</option> }</select></div>
+            <div class="col-sm-4"><button class="btn btn-outline-secondary" type="submit">Lọc kiến thức</button> <a asp-action="Taxonomy" class="btn btn-link">Xóa bộ lọc</a></div>
+        </form>
+    </section>
+    @if (Model.Units.Count == 0) { <p class="analysis-empty">Chưa có bài học phù hợp.</p> }
+    @foreach (var unit in Model.Units)
+    {
+        <details class="analysis-section" data-taxonomy-unit><summary class="mb-3"><h2 class="h5 d-inline">Khối @unit.Grade · Bài @unit.Number — @unit.Name</h2> <span class="text-muted">· @unit.Areas.Count nhóm kiến thức</span></summary><p><a asp-action="Taxonomy" asp-route-grade="@unit.Grade" asp-route-unitId="@unit.Id">Chỉ xem bài này</a></p>
+            @if (unit.Areas.Count == 0) { <p>Chưa có nhóm kiến thức.</p> }
+            @foreach (var area in unit.Areas)
+            {
+                <details class="mb-3" data-taxonomy-area><summary><strong>@area.Name</strong> · @area.Skills.Count kỹ năng @(area.Active ? "" : "(Ngừng hoạt động)")</summary>
+                    <p class="mt-2"><a asp-action="Taxonomy" asp-route-grade="@unit.Grade" asp-route-unitId="@unit.Id" asp-route-areaId="@area.Id">Chỉ xem nhóm này</a></p>
+                    @if (area.Skills.Count == 0) { <p>Chưa có Subskill.</p> }
+                    <ul>@foreach (var skill in area.Skills)
+                    {
+                        <li class="mb-3"><strong>@skill.Name</strong> · @skill.Code <p>@skill.Description</p>
+                            <a asp-action="Questions" asp-route-grade="@unit.Grade" asp-route-subskillId="@skill.Id">Xem câu hỏi</a>
+                            @if (skill.Active) { <a class="ms-3" asp-action="CreateQuestion" asp-route-subskillId="@skill.Id">Tạo câu hỏi cho kỹ năng này</a> }
+                            else { <span> · Ngừng hoạt động; không chọn cho câu mới.</span> }
+                        </li>
+                    }</ul>
+                </details>
+            }
+        </details>
+    }
+</div>

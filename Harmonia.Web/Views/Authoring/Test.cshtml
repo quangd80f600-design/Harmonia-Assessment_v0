@@ -1,0 +1,12 @@
+@model Harmonia.Web.ViewModels.TestDetailsPage
+@{ ViewData["Title"] = "Chi tiết đề"; var statusLabel = Model.Status switch { "Draft" => "Nháp", "Published" => "Đã phát hành", "Archived" => "Đã lưu trữ", _ => "Chưa xác định" }; }
+<div class="analysis-page"><header class="analysis-header" data-test-status="@Model.Status"><a asp-action="Tests">Quản lý đề</a><h1>@Model.Name</h1><p>@statusLabel · @Model.Questions.Count câu · @Model.AssessmentCount đợt đánh giá sử dụng</p><p style="white-space:pre-wrap">@Model.Description</p><p class="analysis-note">Đây là nội dung đã lưu trong đề. Chỉ sửa được đề nháp chưa sử dụng; đề đã phát hành hoặc đã gắn với đợt đánh giá được giữ nguyên.</p><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        @if (Model.Status == "Draft" && Model.AssessmentCount == 0) { <a class="btn btn-outline-secondary" asp-action="EditTest" asp-route-id="@Model.Id">Sửa đề nháp</a>  <form asp-action="Publish" asp-route-id="@Model.Id" method="post" class="d-inline"><button type="submit" class="btn btn-outline-secondary">Phát hành đề</button></form> }
+        @if (Model.Status == "Published") { <a class="btn btn-outline-secondary" asp-action="CreateAssessment" asp-route-testId="@Model.Id">Tạo đợt đánh giá với đề này</a> }
+        <a class="btn btn-link" asp-action="CopyTest" asp-route-id="@Model.Id">Sao chép thành đề nháp</a>
+    </header>
+    @foreach (var q in Model.Questions)
+    {
+        <section class="analysis-section"><h2>Câu @q.Number</h2><p class="analysis-note">@q.SubskillCode · @q.SubskillName · Khối @q.Grade</p><p style="white-space:pre-wrap">@q.Text</p><ol type="A"><li>@q.A</li><li>@q.B</li><li>@q.C</li><li>@q.D</li></ol><p>Đáp án đúng: <strong>@q.Key</strong></p></section>
+    }
+</div>

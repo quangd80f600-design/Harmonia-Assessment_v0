@@ -1,0 +1,48 @@
+@model Harmonia.Web.ViewModels.WorksheetComposer
+@{
+    Dictionary<long,int> DisplayOrders(IEnumerable<long> ids, IEnumerable<Harmonia.Web.ViewModels.WorksheetPick> picks)
+    {
+        var selected=picks.Where(p=>p.Selected).GroupBy(p=>p.Id).ToDictionary(g=>g.Key,g=>g.First().Order);
+        var used=selected.Values.ToHashSet();var result=new Dictionary<long,int>();var next=1;
+        foreach(var id in ids)
+        {
+            if(selected.TryGetValue(id,out var order)){result[id]=order;continue;}
+            while(used.Contains(next))next++;
+            result[id]=next;used.Add(next++);
+        }
+        return result;
+    }
+    var theoryOrders=DisplayOrders(Model.Theories.Select(t=>t.Id),Model.Input.Theories);
+    var questionOrders=DisplayOrders(Model.Questions.Select(q=>q.Id),Model.Input.Questions);
+}
+<label asp-for="Input.PackageName">Tên phiếu</label><input asp-for="Input.PackageName" class="form-control" maxlength="200"/>
+<label asp-for="Input.Instructions">Hướng dẫn chung</label><textarea asp-for="Input.Instructions" class="form-control" rows="3" maxlength="10000"></textarea>
+<p>Chọn nội dung rồi nhập thứ tự mong muốn (không trùng trong từng loại). Các câu cùng Subskill được ghép thành một phần, theo thứ tự xuất hiện đầu tiên; câu được đánh số liên tiếp khi lưu. Mỗi lần tối đa 200 câu và 200 mục lý thuyết. Mọi học sinh nhận cùng gói sẽ nhận toàn bộ nội dung đã chọn.</p>
+@foreach(var skill in Model.Skills){
+<section class="analysis-section"><h2>@skill.Code · @skill.Name</h2>
+@if(ViewData["GroupWorksheet"] is true){<p>@skill.QuestionCount câu trong đề ban đầu.</p>}
+else{<p>Sai @skill.IncorrectCount/@skill.ResponseCount câu đã ghi nhận · @skill.QuestionCount câu trong đề.</p>
+@if(skill.ResponseCount<skill.QuestionCount){<p class="analysis-note">Chưa có dữ liệu trả lời của tất cả câu; không coi câu thiếu dữ liệu là sai.</p>}
+@if(skill.ResponseCount<3){<p class="analysis-note">Ít câu làm cơ sở; giáo viên cần xem xét trước khi giao.</p>}
+}
+<p><a asp-action="Theories" asp-route-subskillId="@skill.Id" target="_blank" rel="noopener">Xem kho lý thuyết cho nội dung này (thẻ mới)</a> · <a asp-action="Theories" asp-route-subskillId="@skill.Id" asp-route-create="true" target="_blank" rel="noopener">Bổ sung lý thuyết (thẻ mới)</a> · <a asp-controller="Authoring" asp-action="CreateQuestion" asp-route-subskillId="@skill.Id" asp-route-usagePurpose="ForIntervention" target="_blank" rel="noopener">Bổ sung câu luyện tập (thẻ mới)</a></p>
+<p class="analysis-note">Hãy lưu nháp trước khi bổ sung học liệu. Thẻ mới giữ nguyên trang đang soạn nhưng không tự cập nhật danh sách. Nếu kho học liệu thay đổi, cần mở lại phiếu và kiểm tra lựa chọn trước khi lưu hoặc giao.</p>
+<h3 class="h5">Lý thuyết</h3>
+@if(!Model.Theories.Any(t=>t.SubskillId==skill.Id)){<p>Chưa có lý thuyết phù hợp. Có thể lưu phiếu chỉ gồm câu luyện; bổ sung lý thuyết trước khi giao nếu cần.</p>}
+@foreach(var t in Model.Theories.Where(t=>t.SubskillId==skill.Id)){
+var pick=Model.Input.Theories.FirstOrDefault(x=>x.Id==t.Id);var key="t"+t.Id;
+<article class="border rounded p-3 mb-2" data-worksheet-pick>
+<label><input type="checkbox" class="worksheet-toggle" checked="@(pick?.Selected==true)"/> @t.Title</label>
+<input type="hidden" name="Input.Theories.Index" value="@key" data-pick-field disabled/><input type="hidden" name="Input.Theories[@key].Id" value="@t.Id" data-pick-field disabled/><input type="hidden" name="Input.Theories[@key].Selected" value="true" data-pick-field disabled/>
+<label>Thứ tự lý thuyết <input type="number" min="1" max="32767" name="Input.Theories[@key].Order" value="@theoryOrders[t.Id]" data-pick-field class="form-control" disabled/></label>
+<details><summary>Xem nội dung</summary><p style="white-space:pre-wrap">@t.Content</p></details></article>}
+<h3 class="h5">Câu luyện tập</h3>
+@if(!Model.Questions.Any(q=>q.SubskillId==skill.Id)){<p>Chưa có câu luyện phù hợp. Hãy thêm câu có mục đích “Luyện tập can thiệp”.</p>}
+@foreach(var q in Model.Questions.Where(q=>q.SubskillId==skill.Id)){
+var pick=Model.Input.Questions.FirstOrDefault(x=>x.Id==q.Id);var key="q"+q.Id;
+<article class="border rounded p-3 mb-2" data-worksheet-pick>
+<label><input type="checkbox" class="worksheet-toggle" checked="@(pick?.Selected==true)"/> @q.Code · @q.Text</label>
+<input type="hidden" name="Input.Questions.Index" value="@key" data-pick-field disabled/><input type="hidden" name="Input.Questions[@key].Id" value="@q.Id" data-pick-field disabled/><input type="hidden" name="Input.Questions[@key].Selected" value="true" data-pick-field disabled/>
+<label>Thứ tự câu <input type="number" min="1" max="32767" name="Input.Questions[@key].Order" value="@questionOrders[q.Id]" data-pick-field class="form-control" disabled/></label>
+<details><summary>Xem lựa chọn và đáp án</summary><p>A. @q.A<br/>B. @q.B<br/>C. @q.C<br/>D. @q.D</p><p>Đáp án: @q.Key · @q.Explanation</p></details></article>}
+</section>}

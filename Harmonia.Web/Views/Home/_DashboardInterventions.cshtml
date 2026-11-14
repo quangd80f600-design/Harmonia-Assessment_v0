@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using Harmonia.Web.ViewModels
+<section class="dashboard-section" aria-labelledby="dashboard-packages-title"><div class="dashboard-section-title"><h2 id="dashboard-packages-title">Gói can thiệp</h2>@if(Model.InterventionsEnabled){<a asp-controller="Interventions" asp-action="Index">Xem tất cả gói</a>}</div>
+@if(!Model.InterventionsEnabled){<p class="dashboard-empty">Chức năng can thiệp chưa được bật trong môi trường này.</p>}
+else if(Model.Packages.Count==0){<p class="dashboard-empty">Chưa có gói can thiệp cho đợt đang chọn. Mở kết quả đánh giá để xem nội dung cần hỗ trợ.</p>}
+@foreach(var p in Model.Packages){<article class="dashboard-skill"><h3><a asp-controller="Interventions" asp-action="Details" asp-route-id="@p.Id">@p.Name</a></h3><p class="small text-muted">@p.BaselineName · @DashboardText.Status(p.Status)</p>@if(p.AssignedCount==0){<p>Chưa giao cho học sinh.</p>}else{<p>Chưa ghi nhận ngày phát: <strong>@p.MissingDeliveryDateCount/@p.AssignedCount học sinh</strong></p>}<a asp-controller="InterventionFollowups" asp-action="Index" asp-route-id="@p.Id">Xem / liên kết đánh giá lại</a></article>}
+</section>

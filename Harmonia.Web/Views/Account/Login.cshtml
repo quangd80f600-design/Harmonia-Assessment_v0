@@ -1,0 +1,8 @@
+@if (TempData["AccountMessage"] is string accountMessage) { <p class="alert alert-info" role="status">@accountMessage</p> }
+@model Harmonia.Web.ViewModels.LoginInput
+@{ ViewData["Title"]="Đăng nhập"; }
+<div class="harmonia-auth-card mx-auto my-4" style="max-width:420px"><h1 class="h3">Đăng nhập Harmonia</h1><p>Dành cho giáo viên và quản lý học vụ.</p>
+<form asp-action="Login" method="post"><div asp-validation-summary="All" class="text-danger" role="alert"></div><input asp-for="ReturnUrl" type="hidden" />
+<label asp-for="UserName" class="form-label">Tên đăng nhập</label><input asp-for="UserName" class="form-control mb-3" autocomplete="username" />
+<label asp-for="Password" class="form-label">Mật khẩu</label><input name="Password" id="Password" type="password" class="form-control mb-3" autocomplete="current-password" required />
+<button class="btn btn-primary">Đăng nhập</button></form><p class="mt-3 text-muted">Liên hệ quản lý nếu cần cấp hoặc đặt lại tài khoản.</p></div>

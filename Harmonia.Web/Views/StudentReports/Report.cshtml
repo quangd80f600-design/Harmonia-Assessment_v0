@@ -1,0 +1,97 @@
+@model Harmonia.Web.ViewModels.StudentReportViewModel
+@using System.Globalization
+@{
+    Layout = null;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    string Percent(decimal? value) => value is decimal number ? number.ToString("0.##", culture) + "%" : "—";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>Báo cáo kết quả cá nhân — Harmonia</title>
+    <link rel="stylesheet" href="~/css/harmonia-tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student-report.css" asp-append-version="true" />
+    <script src="~/js/student-report.js" asp-append-version="true" defer></script>
+</head>
+<body class="student-report-page">
+    <div class="report-toolbar" aria-label="Thao tác báo cáo">
+        <div><a asp-route="IndividualDiagnosis" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@Model.StudentId">← Phân tích cá nhân</a>
+            <p>Truy cập báo cáo yêu cầu tài khoản có quyền trên lớp của đợt đánh giá.</p></div>
+        @if(Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.ParentCommentOptions>>()?.Value.Enabled == true)
+        { <a asp-route="StudentComment" asp-route-assessmentId="@Model.Assessment.AssessmentId" asp-route-studentId="@Model.StudentId">Soạn / Kiểm tra báo cáo học sinh</a> }
+        @if(Model.ApprovedComment is null) { <p>Chưa có nhận xét đã duyệt còn khớp căn cứ; bản in hiện không có phần nhận xét bằng lời.</p> }
+        @if(Model.Packages.Count == 0) { <p>Chưa có gói can thiệp được giao cho học sinh trong đợt này; bản in không có phần định hướng từ gói.</p> }
+        <button type="button" id="print-report">In / Lưu PDF</button>
+    </div>
+    <main class="student-report" id="student-report">
+        <header class="report-header">
+            <div class="report-brand"><img src="~/image/harmonia-logo.png" alt="Harmonia Assessment" width="160" /><span>ĐÁNH GIÁ &amp; ĐỊNH HƯỚNG HỌC TẬP</span></div>
+            <p class="report-eyebrow">THÔNG TIN DÀNH CHO GIA ĐÌNH</p>
+            <h1>Báo cáo kết quả đánh giá cá nhân</h1>
+            <dl class="report-context">
+                <div><dt>Học sinh</dt><dd>@Model.StudentName</dd></div><div><dt>Mã học sinh</dt><dd>@Model.StudentCode</dd></div>
+                <div><dt>Lớp</dt><dd>@Model.Assessment.ClassName</dd></div><div><dt>Ngày đánh giá</dt><dd>@Model.Assessment.AssessmentDate.ToString("dd/MM/yyyy")</dd></div>
+                <div class="report-wide"><dt>Đợt đánh giá</dt><dd>@Model.Assessment.AssessmentName</dd></div>
+                <div class="report-wide"><dt>Bài đánh giá</dt><dd>@Model.Assessment.TestName</dd></div>
+            </dl>
+        </header>
+
+        <section class="report-section" aria-labelledby="results-heading">
+            <h2 id="results-heading"><span>A</span> Kết quả đánh giá</h2>
+            <div class="report-summary">
+                <div><span>Điểm đã ghi nhận</span><strong data-report-score>@(Model.HasAttempt && Model.Score is decimal score ? score.ToString("0.##", culture) + " / 10" : "Chưa có kết quả")</strong></div>
+                <div><span>Số câu đã chấm</span><strong>@(Model.HasAttempt ? $"{Model.TotalResponses} / {Model.TestQuestionCount}" : "—")</strong></div>
+                <div><span>Tỷ lệ trả lời đúng</span><strong>@Percent(Model.AccuracyPercentage)</strong></div>
+            </div>
+            @if (!Model.HasAttempt) { <p class="report-empty" data-report-missing>Chưa có kết quả đánh giá.</p> }
+            @foreach (var area in Model.KnowledgeAreas)
+            {
+                <div class="report-area">
+                    <h3>@area.Name</h3>
+                    <p class="report-area-total">Trả lời đúng @area.CorrectCount/@area.ResponseCount câu. · Tỷ lệ đúng: @Percent(area.AccuracyPercentage) · @area.QuestionCount câu trong đề</p>
+                    <table class="report-table">
+                        <colgroup><col class="skill-column" /><col /><col /><col /><col /><col /></colgroup>
+                        <thead><tr><th scope="col">Nội dung kiến thức</th><th scope="col">Câu trong đề</th><th scope="col">Câu đã chấm</th><th scope="col">Đúng</th><th scope="col">Sai</th><th scope="col">Tỷ lệ đúng</th></tr></thead>
+                        <tbody>@foreach (var skill in area.Subskills)
+                        {
+                            <tr><th scope="row">@skill.Name
+                            </th><td>@skill.QuestionCount</td><td>@(skill.ResponseCount > 0 ? skill.ResponseCount.ToString() : "—")</td><td>@(skill.ResponseCount > 0 ? skill.CorrectCount.ToString() : "—")</td><td>@(skill.ResponseCount > 0 ? skill.IncorrectCount.ToString() : "—")</td><td>@Percent(skill.AccuracyPercentage)</td></tr>
+                        }</tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        @if(Model.ApprovedComment is {} comment)
+        {
+            <section class="report-section" aria-labelledby="review-heading">
+                <h2 id="review-heading"><span>B</span> Nhận xét và hỗ trợ học tập</h2>
+                <div class="parent-comment" data-parent-comment>@comment.Text</div>
+                @if(!string.IsNullOrWhiteSpace(comment.ProcessText))
+                {
+                    <h3>Ghi nhận quá trình học tập</h3>
+                    @if(comment.Observation is {} observation) { <p>Từ @observation.Start.ToString("dd/MM/yyyy") đến @observation.End.ToString("dd/MM/yyyy")</p> }
+                    <div class="parent-comment" data-parent-observation>@comment.ProcessText</div>
+                }
+            </section>
+        }
+        @if (Model.Packages.Count > 0)
+        {
+            <section class="report-section" aria-labelledby="plan-heading">
+                <h2 id="plan-heading"><span>C</span> Định hướng học tập</h2>
+                @foreach (var package in Model.Packages)
+                {
+                    <article class="report-plan">
+                        <h3>@package.PackageName</h3>
+                        @if (!string.IsNullOrWhiteSpace(package.Instructions)) { <p class="report-instructions">@package.Instructions</p> }
+                    </article>
+                }
+            </section>
+        }
+        <footer class="report-footer"><span>Harmonia Assessment · Thông tin học tập cá nhân, chỉ chia sẻ với người được phép.</span><span>Lập lúc @Model.GeneratedAt.ToString("HH:mm dd/MM/yyyy") (giờ Việt Nam)</span></footer>
+    </main>
+</body>
+</html>

@@ -1,0 +1,64 @@
+@model Harmonia.Web.ViewModels.ClassDetailsViewModel
+@{ ViewData["Title"] = "Chi tiết lớp"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-action="Index">Lớp &amp; học sinh</a></li><li class="breadcrumb-item active" aria-current="page">Chi tiết lớp</li></ol></nav>
+        <h1>@Model.Class.ClassName</h1><p class="analysis-description">Giáo viên phụ trách, danh sách học sinh và các đợt đánh giá của lớp.</p>
+        <partial name="_ClassContext" model="Model.Class" />
+        @if (TempData["AcademicMessage"] is string message) { <p class="alert alert-info" role="status">@message</p> }
+        @if (Model.CanImport) { <a class="btn btn-outline-secondary mt-3" asp-action="Import" asp-route-id="@Model.Class.ClassId">Nhập danh sách CSV</a> }
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @if (Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.LearningObservationOptions>>()?.Value.Enabled == true)
+            { <a class="btn btn-outline-primary" asp-controller="LearningObservations" asp-action="Index" asp-route-classId="@Model.Class.ClassId">Ghi nhận quá trình học tập</a> }
+            @if (Model.CanAssignTeacher) { <a class="btn btn-outline-secondary" asp-controller="Teachers" asp-action="Index" asp-route-classId="@Model.Class.ClassId">Phân công giáo viên cho lớp</a> }
+            @if (Model.CanCreateAssessment) { <a class="btn btn-primary" asp-controller="Authoring" asp-action="CreateAssessment" asp-route-classId="@Model.Class.ClassId">Tạo đợt đánh giá cho lớp</a> }
+        </div>
+    </header>
+    <section class="analysis-section" aria-labelledby="class-teachers-title">
+        <h2 id="class-teachers-title">@(User.IsInRole("AcademicManager") ? "Giáo viên phụ trách" : "Phân công của bạn")</h2>
+        <p class="analysis-note">Hiệu lực tại @Model.AsOf.ToString("dd/MM/yyyy"). Quyền xem lớp vẫn theo phân công hiện tại.</p>
+        @if (Model.Teachers.Count == 0) { <p class="analysis-empty">@(User.IsInRole("AcademicManager") ? "Chưa có giáo viên được phân công tại ngày đang xem." : "Chưa có phân công của bạn tại ngày đang xem.")</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>Giáo viên</th><th>Mã</th><th>Từ ngày</th><th>Đến trước ngày</th></tr></thead><tbody>
+            @foreach (var teacher in Model.Teachers)
+            {
+                <tr data-class-teacher-id="@teacher.TeacherId"><th scope="row">@if (teacher.CanOpenTeacher) { <a asp-controller="Teachers" asp-action="Details" asp-route-id="@teacher.TeacherId">@teacher.TeacherName</a> } else { @teacher.TeacherName }</th><td>@teacher.TeacherCode</td><td>@teacher.StartDate.ToString("dd/MM/yyyy")</td><td>@(teacher.EndDate?.ToString("dd/MM/yyyy") ?? "Không giới hạn")</td></tr>
+            }
+            </tbody></table></div>
+        }
+    </section>
+    <section class="analysis-section" aria-labelledby="roster-heading">
+        <h2 id="roster-heading">Danh sách học sinh theo ngày</h2>
+        <form method="get" asp-action="Details" asp-route-id="@Model.Class.ClassId" class="participation-filter">
+            <div><label for="asOf" class="form-label">Ngày xem danh sách</label><input id="asOf" type="date" name="asOf" value="@Model.AsOf.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+            <button class="btn btn-outline-secondary" type="submit">Xem theo ngày</button>
+        </form>
+        <p class="analysis-note">Sĩ số tại ngày @Model.AsOf.ToString("dd/MM/yyyy"): @Model.Students.Count học sinh. Nếu vừa nhập danh sách cho một ngày khác, hãy chọn ngày tương ứng.</p>
+        @if (Model.Students.Count == 0) { <p class="analysis-empty">Không có học sinh thuộc lớp vào ngày đang xem. Hãy kiểm tra thời gian tham gia lớp hoặc chọn ngày khác.</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table table-striped align-middle participation-table">
+                <thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ và tên</th><th scope="col">Ngày sinh</th><th scope="col">Giới tính</th><th scope="col">Ngày vào</th><th scope="col">Ngày kết thúc</th><th scope="col">Hồ sơ</th><th scope="col">Kết quả</th></tr></thead>
+                <tbody>@foreach (var s in Model.Students)
+                {
+                    <tr><td>@s.StudentCode</td><th scope="row">@s.FullName</th><td>@s.DateOfBirth.ToString("dd/MM/yyyy")</td><td>@(s.Gender == "Male" ? "Nam" : "Nữ")</td><td>@s.StartDate.ToString("dd/MM/yyyy")</td><td>@(s.EndDate?.ToString("dd/MM/yyyy") ?? "Chưa kết thúc")</td><td>@(s.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</td><td><a asp-route="StudentProgress" asp-route-classId="@Model.Class.ClassId" asp-route-studentId="@s.StudentId">Theo dõi kết quả</a></td></tr>
+                }</tbody>
+            </table></div>
+        }
+    </section>
+    <section class="analysis-section" aria-labelledby="class-assessments-title">
+        <h2 id="class-assessments-title">Các đợt đánh giá của lớp</h2>
+        <p class="analysis-note">Các đợt đánh giá không bị lọc theo ngày xem danh sách học sinh ở trên. Mở một đợt để xem học sinh và kết quả tại ngày đánh giá đó.</p>
+        @if (Model.Assessments.Count == 0) { <p class="analysis-empty">Chưa có đợt đánh giá trong phạm vi của bạn.</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>Đợt đánh giá</th><th>Ngày</th><th>Đề</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+            @foreach (var assessment in Model.Assessments)
+            {
+                <tr data-class-assessment-id="@assessment.Id"><th scope="row"><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@assessment.Id">@assessment.Name</a></th><td>@assessment.Date.ToString("dd/MM/yyyy")</td><td>@assessment.TestName</td><td>@(assessment.Status switch { "Draft" => "Nháp", "Open" => "Đang mở", "Completed" => "Đã hoàn thành", "Cancelled" => "Đã hủy", _ => "Chưa xác định" })</td><td><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@assessment.Id">Xem học sinh và kết quả</a></td></tr>
+            }
+            </tbody></table></div>
+        }
+    </section>
+</div>

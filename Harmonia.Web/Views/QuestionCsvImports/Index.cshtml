@@ -1,0 +1,37 @@
+@model Harmonia.Web.ViewModels.QuestionCsvPage
+@{ ViewData["Title"] = "Nhập câu hỏi CSV"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <a asp-controller="Authoring" asp-action="Questions">Ngân hàng câu hỏi</a>
+        <h1>Nhập câu hỏi CSV</h1>
+        <p>Tải mẫu, điền câu hỏi rồi lưu dưới dạng <strong>CSV UTF-8 (phân cách bằng dấu phẩy)</strong>. Tối đa 200 câu / 1 MB.</p>
+    </header>
+    <section class="analysis-section" aria-labelledby="upload-title">
+        <h2 id="upload-title">1. Chuẩn bị và tải file</h2>
+        <a class="btn btn-outline-secondary mb-3" asp-action="Template">Tải mẫu CSV</a>
+        <p>Mẫu có 8 cột: <code>@Harmonia.Web.Services.Import.QuestionCsvParser.Header</code>.</p>
+        <p>Mỗi dòng có đủ nội dung và bốn lựa chọn khác nhau; đáp án là A, B, C hoặc D. Chỉ nhập văn bản thuần. Độ khó mặc định là 1, giải thích để trống; có thể bổ sung sau theo quyền sửa câu hỏi.</p>
+        <p>Chỉ thêm câu mới vào ngân hàng dùng chung; không ghi đè mã đã có. Một dòng lỗi sẽ chặn toàn file. Nội dung chứa dấu phẩy hoặc xuống dòng cần được đặt trong dấu ngoặc kép; Excel sẽ thực hiện khi lưu CSV.</p>
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert-danger" role="alert"><h3 class="h5">Chưa nhập câu hỏi nào</h3>
+                <ul class="mb-0">@foreach (var error in Model.Errors) { <li>@(error.Line.HasValue ? $"Dòng {error.Line}: " : "")@error.Field — @error.Message</li> }</ul>
+            </div>
+        }
+        <form asp-action="Preview" method="post" enctype="multipart/form-data">
+            <label class="form-label" for="UsagePurpose">Mục đích sử dụng cho toàn bộ file</label>
+            <select asp-for="UsagePurpose" class="form-select mb-3" required><option value="ForTest">Dùng trong đề kiểm tra</option><option value="ForIntervention">Luyện tập can thiệp</option></select>
+            <label class="form-label" for="question-csv">File câu hỏi</label>
+            <input class="form-control mb-3" type="file" id="question-csv" name="file" accept=".csv,text/csv" required />
+            <button class="btn btn-primary" type="submit">Kiểm tra và xem trước</button>
+        </form>
+    </section>
+    <section class="analysis-section" aria-labelledby="skills-title">
+        <h2 id="skills-title">Mã kỹ năng có thể sử dụng</h2>
+        <p>Chép đúng mã vào cột <code>SubskillCode</code>. Không tự tạo kỹ năng mới từ CSV.</p>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Mã kỹ năng</th><th>Kỹ năng</th><th>Khối / Unit / Nhóm kiến thức</th></tr></thead>
+            <tbody>@foreach (var skill in Model.Skills) { <tr><td><code>@skill.Code</code></td><td>@skill.Name</td><td>@skill.Grade / @skill.UnitName / @skill.AreaName</td></tr> }</tbody>
+        </table></div>
+        @if (Model.Skills.Count == 0) { <p>Chưa có kỹ năng hoạt động để nhập câu hỏi.</p> }
+    </section>
+</div>

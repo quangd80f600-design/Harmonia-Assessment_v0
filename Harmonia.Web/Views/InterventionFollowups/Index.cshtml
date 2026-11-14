@@ -1,0 +1,58 @@
+@model Harmonia.Web.ViewModels.InterventionFollowupPage
+@{ ViewData["Title"] = "Theo dõi kết quả đánh giá"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <a asp-controller="Interventions" asp-action="Details" asp-route-id="@Model.PackageId">Chi tiết gói can thiệp</a>
+        <h1>Theo dõi kết quả đánh giá</h1><h2>@Model.PackageName</h2>
+        <p>Đợt đánh giá ban đầu: <strong>@Model.Baseline.Name</strong> · @Model.Baseline.Date.ToString("dd/MM/yyyy")</p>
+        <p>@Model.AssignedStudentCount học sinh · @Model.TargetSkillCount Subskill mục tiêu · @Model.Followups.Count lần theo dõi khả dụng.</p>
+        <p class="alert alert-info">Thay đổi kết quả là quan sát giữa các lần đánh giá, không chứng minh do gói can thiệp gây ra. Các đề có thể khác độ khó. Ngày phát học liệu không chứng minh học sinh đã hoàn thành học liệu.</p>
+        <p class="analysis-note">Chỉ so sánh kết quả của cùng nội dung kiến thức đã lưu trong các đề. Những nội dung có tên gần giống nhưng khác mục trong danh mục được giữ riêng. Chỉ hiển thị các đợt đánh giá hợp lệ mà bạn có quyền xem.</p>
+        @if (TempData["FollowupMessage"] is string message) { <p class="alert alert-success" role="status">@message</p> }
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    </header>
+    @if (Model.CanLink)
+    {
+        <section class="analysis-section">
+            <h2>Liên kết đợt đánh giá lại</h2>
+            @if (Model.Candidates.Count == 0) { <p>Chưa có đợt đánh giá đủ điều kiện để liên kết thêm.</p> }
+            else
+            {
+                <form asp-action="Link" asp-route-id="@Model.PackageId" method="post" class="row g-3 align-items-end">
+                    <div class="col-md-9"><label for="AssessmentId" class="form-label">Đợt cùng lớp, sau ngày đánh giá gốc</label>
+                        <select id="AssessmentId" name="AssessmentId" class="form-select" required><option value="">Chọn đợt đánh giá</option>
+                            @foreach (var a in Model.Candidates) { <option value="@a.Id">@a.Date.ToString("dd/MM/yyyy") · @a.Name · @a.Status</option> }
+                        </select>
+                    </div><div class="col-md-3"><button class="btn btn-primary" type="submit">Liên kết theo dõi</button></div>
+                </form>
+            }
+        </section>
+    }
+    <section class="analysis-section">
+        <h2>Đánh giá gốc và các lần theo dõi</h2>
+        @if (Model.Followups.Count == 0) { <p class="analysis-empty" data-no-followup>Chưa có đợt đánh giá lại hợp lệ trong phạm vi bạn được phép xem. Kết quả ban đầu vẫn được hiển thị; chưa có kết quả đánh giá lại không có nghĩa là đạt 0%.</p> }
+        @if (Model.Rows.Count == 0) { <p>Chưa có học sinh đã giao hợp lệ hoặc chưa có Subskill mục tiêu trong gói.</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table table-striped align-middle" data-followup-table>
+                <thead><tr><th scope="col">Học sinh / Subskill</th><th scope="col">Đánh giá gốc<br />@Model.Baseline.Date.ToString("dd/MM/yyyy")</th>
+                    @foreach (var a in Model.Followups) { <th scope="col">@a.Name<br />@a.Date.ToString("dd/MM/yyyy")</th> }
+                </tr></thead>
+                <tbody>@foreach (var row in Model.Rows)
+                {
+                    <tr data-student-id="@row.StudentId" data-subskill-id="@row.Skill.Id">
+                        <th scope="row">@row.StudentName · @row.StudentCode<div>@row.Skill.Code — @row.Skill.Name</div></th>
+                        <td data-baseline><partial name="_Measure" model="row.Baseline" /></td>
+                        @foreach (var comparison in row.Followups)
+                        {
+                            <td data-followup-id="@comparison.Assessment.Id"><partial name="_Measure" model="comparison.Result" />
+                                <p class="mt-2">@(comparison.DeltaPoints is decimal delta ? $"Thay đổi quan sát: {delta:+0.##;-0.##;0} điểm phần trăm" : "Chưa đủ dữ liệu tương ứng để so sánh")</p>
+                                <p class="analysis-note">@comparison.DeliveryMessage</p>
+                            </td>
+                        }
+                    </tr>
+                }</tbody>
+            </table></div>
+        }
+    </section>
+</div>

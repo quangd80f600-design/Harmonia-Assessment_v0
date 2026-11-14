@@ -1,0 +1,36 @@
+@model Harmonia.Web.ViewModels.QuestionBankPage
+@{ ViewData["Title"] = "Ngân hàng câu hỏi"; ViewData["CompactAuthoring"] = true; }
+<link rel="stylesheet" href="~/css/test-workspace.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/question-navigation.css" asp-append-version="true" />
+<div class="question-bank-workspace">
+<partial name="_QuestionKnowledgeNavigation" model="Model.Filter" />
+<div class="analysis-page">
+    <header class="analysis-header"><a asp-action="Index">Câu hỏi &amp; đề</a><h1>Ngân hàng câu hỏi</h1><p class="analysis-description">Tìm kiếm theo mã/nội dung, lọc khối hoặc chọn Subskill từ cây kiến thức.</p>
+        <a class="btn btn-outline-secondary" asp-action="CreateQuestion" asp-route-subskillId="@Model.Filter.SubskillId">Tạo câu hỏi</a> <a class="btn btn-outline-secondary" asp-controller="QuestionCsvImports" asp-action="Index">Nhập CSV</a> <a class="btn btn-link" asp-action="CreateTest" asp-route-grade="@(Model.Filter.Grade ?? 9)">Chọn câu để tạo đề</a></header>
+    <section class="analysis-section">
+        <nav aria-label="Vị trí trong cây kiến thức" class="knowledge-breadcrumb">@Model.KnowledgePath</nav>
+        @if (Model.Notice is not null) { <p class="alert alert-info" role="status">@Model.Notice</p> }
+        @if (Model.SelectedSubskill is not null) { <p data-subskill-context>Đang lọc kỹ năng: <strong>@Model.SelectedSubskill</strong></p> }
+        <p id="subskill-filter-notice" class="alert alert-info" role="status" hidden>Đã bỏ lọc Subskill khi đổi khối. Bấm Tìm để xem câu hỏi của khối mới.</p>
+        <form asp-action="Questions" method="get" id="question-bank-filter" class="row g-3 align-items-end">
+            <div class="col-sm-6"><label for="term" class="form-label">Mã hoặc nội dung</label><input class="form-control" id="term" name="Term" value="@Model.Filter.Term" maxlength="100" /></div>
+            <input type="hidden" id="grade" name="Grade" value="@Model.Filter.Grade" />
+            <div class="col-sm-3"><label for="UsagePurpose" class="form-label">Mục đích sử dụng</label><select id="UsagePurpose" name="UsagePurpose" class="form-select"><option value="">Tất cả</option><option value="ForTest" selected="@(Model.Filter.UsagePurpose == "ForTest")">Dùng trong đề kiểm tra</option><option value="ForIntervention" selected="@(Model.Filter.UsagePurpose == "ForIntervention")">Luyện tập can thiệp</option></select></div>
+            <input type="hidden" name="UnitId" value="@Model.Filter.UnitId" />
+            <input type="hidden" name="AreaId" value="@Model.Filter.AreaId" />
+            @if (Model.Filter.SubskillId.HasValue) { <input type="hidden" name="SubskillId" value="@Model.Filter.SubskillId" data-subskill-filter /><input type="hidden" name="ClearSubskill" value="false" data-clear-subskill /> }
+            <div class="col-sm-3"><button type="submit" class="btn btn-outline-secondary">Tìm</button> <a asp-action="Questions" class="btn btn-link">Xóa bộ lọc</a></div>
+        </form>
+        <script src="~/js/authoring-filters.js" asp-append-version="true" defer></script>
+        <p class="analysis-note mt-3">@Model.Total câu phù hợp · trang @Model.Filter.Page. Ngân hàng dùng chung; giáo viên tạo bản sao để điều chỉnh. Chỉ quản lý học vụ được sửa câu chưa thuộc đề.</p>
+        <div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th scope="col">Mã</th><th scope="col">Nội dung</th><th scope="col">Subskill / khối</th><th scope="col">Sử dụng</th></tr></thead>
+            <tbody>@foreach (var q in Model.Rows) { <tr><th scope="row"><a asp-action="Question" asp-route-id="@q.Id">@q.Code</a></th><td>@(q.Text.Length > 180 ? q.Text[..180] + "…" : q.Text)<br /><span class="badge text-bg-light">@Harmonia.Web.Models.QuestionPurposes.Label(q.UsagePurpose)</span></td><td>@q.SubskillName · Khối @q.Grade · @(q.Status == "Active" ? "Hoạt động" : "Ngừng hoạt động")</td><td>@q.TestCount đề</td></tr> }</tbody>
+        </table></div>
+        @if (Model.Rows.Count == 0) { <p class="analysis-empty">Không có câu hỏi phù hợp.</p> }
+        @if (Model.Filter.Page > 1) { <a asp-action="Questions" asp-route-page="@(Model.Filter.Page - 1)" asp-route-term="@Model.Filter.Term" asp-route-grade="@Model.Filter.Grade" asp-route-unitId="@Model.Filter.UnitId" asp-route-areaId="@Model.Filter.AreaId" asp-route-subskillId="@Model.Filter.SubskillId" asp-route-usagePurpose="@Model.Filter.UsagePurpose">Trang trước</a> }
+        @if (Model.Filter.Page * 20 < Model.Total) { <a class="ms-3" asp-action="Questions" asp-route-page="@(Model.Filter.Page + 1)" asp-route-term="@Model.Filter.Term" asp-route-grade="@Model.Filter.Grade" asp-route-unitId="@Model.Filter.UnitId" asp-route-areaId="@Model.Filter.AreaId" asp-route-subskillId="@Model.Filter.SubskillId" asp-route-usagePurpose="@Model.Filter.UsagePurpose">Trang sau</a> }
+    </section>
+</div>
+
+</div>
+<script src="~/js/question-navigation.js" asp-append-version="true" defer></script>

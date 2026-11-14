@@ -1,0 +1,8 @@
+@model long
+@{ ViewData["Title"] = "Preview không còn hợp lệ"; }
+<div class="analysis-page">
+    <header class="analysis-header"><h1>Preview không còn hợp lệ</h1></header>
+    <p class="analysis-empty" role="alert">Preview đã hết hạn, đã dùng hoặc không thuộc lớp/phiên này. Không thực hiện lần nhập mới từ yêu cầu này.</p>
+    <p>Nếu vừa xác nhận, kiểm tra danh sách lớp trước khi nhập lại.</p>
+    <a asp-action="Details" asp-route-id="@Model" class="btn btn-outline-secondary">Xem danh sách lớp</a> <a asp-action="Import" asp-route-id="@Model" class="btn btn-link">Tải lên lại</a>
+</div>

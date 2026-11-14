@@ -1,0 +1,12 @@
+@model Harmonia.Web.ViewModels.DashboardPage
+@using System.Globalization
+<section class="dashboard-section" aria-labelledby="dashboard-analysis-title">
+    <div class="dashboard-section-title"><h2 id="dashboard-analysis-title"><span class="dashboard-step">02</span> Phát hiện từ kết quả đánh giá</h2><partial name="_NavigationIcon" model='@("assessments")' /></div>
+    @if(Model.SelectedAssessment is null){<p class="dashboard-empty">Chọn một đợt đánh giá để xem kết quả theo nội dung kiến thức.</p>}
+    else{var a=Model.SelectedAssessment;<p class="dashboard-context">@a.Name · @a.ClassName · @a.Date.ToString("dd/MM/yyyy")</p>
+        @if(!Model.HasResponses){<p class="dashboard-empty">Chưa có dữ liệu trả lời để tổng hợp nội dung cần xem xét.</p>}
+        else if(Model.SkillRows.Count == 0){<p class="dashboard-empty">Chưa ghi nhận câu trả lời sai trong dữ liệu hiện có.</p>}
+        @foreach(var s in Model.SkillRows){<article class="dashboard-skill"><h3>@s.SubskillName</h3><p class="small text-muted">@s.SubskillCode · @s.QuestionCount câu trong đề</p><p>Tỷ lệ trả lời sai: <strong>@s.ErrorPercentage?.ToString("0.##",CultureInfo.GetCultureInfo("vi-VN"))%</strong></p><p class="small">@s.IncorrectResponses/@s.TotalResponses lượt trả lời sai</p>@if(s.QuestionCount == 1){<p class="dashboard-notice small">Chỉ có 1 câu trong đề cho nội dung này; nên xem thêm bài làm.</p>}<a asp-controller="Assessments" asp-action="QuestionDetail" asp-route-id="@a.Id" asp-route-subskillId="@s.SubskillId">Xem chi tiết</a></article>}
+        <a asp-controller="Assessments" asp-action="SubskillSummary" asp-route-id="@a.Id">Xem toàn bộ nội dung đánh giá</a>
+    }
+</section>

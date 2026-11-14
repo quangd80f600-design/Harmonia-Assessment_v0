@@ -1,0 +1,24 @@
+@model Harmonia.Web.ViewModels.WorksheetExactGroupsPage
+@{ ViewData["Title"]="Chia nhóm ôn tập"; }
+<div class="analysis-page">
+<header class="analysis-header"><a asp-controller="Assessments" asp-action="SubskillSummary" asp-route-id="@Model.AssessmentId">Quay lại phân tích lớp</a>
+<h1>Chia nhóm ôn tập theo nội dung sai</h1><p>@Model.ClassName · @Model.AssessmentName</p>
+<p>Mỗi nhóm gồm các học sinh có câu sai ở đúng cùng tập nội dung kiến thức. Số câu sai trong từng nội dung có thể khác nhau. Hệ thống chưa chọn học liệu hoặc giao phiếu.</p></header>
+<section class="analysis-section"><div class="analysis-metrics">
+<div><span>Nhóm cần ôn tập</span><strong>@Model.Groups.Count</strong></div><div><span>Học sinh trong nhóm</span><strong>@Model.Groups.Sum(g=>g.Students.Count)</strong></div>
+<div><span>Đúng toàn bộ</span><strong>@Model.CorrectOnlyCount</strong></div><div><span>Chưa có kết quả</span><strong>@Model.MissingCount</strong></div><div><span>Chưa đủ câu trả lời</span><strong>@Model.IncompleteCount</strong></div>
+</div><p>Chỉ phân nhóm khi đã ghi nhận đủ câu trả lời của bài đánh giá. Ô bỏ trống đã nhập được chấm sai; câu chưa ghi nhận không tự tính là sai. Học sinh đúng toàn bộ, chưa có kết quả hoặc thiếu dữ liệu được tách khỏi các nhóm.</p>
+<a asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.AssessmentId">Xem danh sách kết quả của lớp</a></section>
+@if(Model.Groups.Count==0){<p class="analysis-empty">Chưa có nhóm đủ căn cứ để soạn phiếu. Hãy kiểm tra kết quả đã nhập của lớp.</p>}
+@for(var i=0;i<Model.Groups.Count;i++){
+ var group=Model.Groups[i];
+ var query=string.Join("&",group.SubskillIds.Select(id=>"subskillIds="+id));
+ var url=Url.Action("Group","Worksheets",new{assessmentId=Model.AssessmentId,subskillId=group.SubskillIds[0],match="Exact"})+"&"+query;
+ <section class="analysis-section" data-exact-group data-student-count="@group.Students.Count" data-profile="@string.Join(",",group.SubskillIds)">
+ <h2>Nhóm @(i+1) · @group.Students.Count học sinh</h2><p><strong>Cần ôn: @string.Join(" · ",group.Skills.Select(s=>s.Name))</strong></p>
+ <details><summary>Xem học sinh trong nhóm</summary><ul>@foreach(var student in group.Students){<li>@student.StudentCode · @student.FullName</li>}</ul></details>
+ <p class="mt-3"><a class="btn btn-primary" href="@url">Soạn phiếu cho nhóm này</a></p>
+ <p class="analysis-note">Danh sách được kiểm tra lại khi mở trang soạn. Người nhận trong nhóm được chọn sẵn để bạn kiểm tra; mỗi lần tối đa 200 em. Bạn vẫn chọn lý thuyết, câu luyện và xác nhận giao.</p>
+ </section>
+}
+</div>

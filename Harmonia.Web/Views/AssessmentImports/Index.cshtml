@@ -1,0 +1,57 @@
+@model Harmonia.Web.ViewModels.ImportPageViewModel
+@{
+    ViewData["Title"] = "Nhập kết quả CSV";
+}
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Assessments" asp-action="Index">Danh sách Assessment</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Assessments" asp-action="Overview" asp-route-id="@Model.Assessment.AssessmentId">Tổng quan đợt đánh giá</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Nhập CSV</li>
+        </ol></nav>
+        <h1>Nhập kết quả CSV</h1>
+        <p class="analysis-description">Kiểm tra toàn bộ file và xem trước điểm trước khi xác nhận lưu kết quả.</p>
+        <partial name="~/Views/Assessments/_AnalysisContext.cshtml" model="Model.Assessment" />
+        <p class="analysis-note">Người ghi nhận: @Model.DemoActor</p>
+    </header>
+    @if (TempData["ImportMessage"] is string message)
+    {
+        <div class="alert alert-info" role="status">@message</div>
+    }
+    @if (!Model.CanImport)
+    {
+        <div class="alert alert-info" role="status">@Model.BlockReason</div>
+    }
+    else
+    {
+        <section class="analysis-section" aria-labelledby="template-heading">
+            <h2 id="template-heading"><span class="section-number">01.</span> Chuẩn bị file</h2>
+            <p>CSV UTF-8, dấu phẩy, tối đa 1 MB và 200 học sinh. Mỗi dòng gồm StudentCode và đủ @Model.QuestionCount cột câu hỏi theo mẫu.</p>
+            <p>Điền A/B/C/D hoặc để ô trống. Ô trống được chấm không đúng; vẫn phải giữ đủ cột. Không nhập lại học sinh đã có kết quả.</p>
+            <p class="analysis-note">V0 chỉ lưu đúng/sai, không lưu lựa chọn A/B/C/D. Sau khi lưu, không phân biệt lại được câu sai với câu bỏ trống.</p>
+            <a class="btn btn-outline-secondary" asp-action="Template" asp-route-id="@Model.Assessment.AssessmentId">Tải mẫu CSV cho Assessment này</a>
+            <p class="analysis-note mt-2 mb-0">Tệp mẫu chỉ có dòng tên cột, chưa có học sinh. Điền mã học sinh từ danh sách trong trang Tổng quan đợt đánh giá và giữ nguyên các cột của mẫu.</p>
+        </section>
+        <section class="analysis-section" aria-labelledby="upload-heading">
+            <h2 id="upload-heading"><span class="section-number">02.</span> Tải lên và kiểm tra</h2>
+            @if (Model.Errors.Count > 0)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <p>File chưa được nhập. Sửa các lỗi dưới đây rồi tải lên lại:</p>
+                    <ul class="mb-0">
+                    @foreach (var error in Model.Errors)
+                    {
+                        <li>@if (error.Line.HasValue) { <span>Dòng @error.Line · </span> } @error.Field: @error.Message</li>
+                    }
+                    </ul>
+                </div>
+            }
+            <form asp-action="Preview" asp-route-id="@Model.Assessment.AssessmentId" method="post" enctype="multipart/form-data">
+                <label for="csv-file" class="form-label">File câu trả lời CSV</label>
+                <input id="csv-file" type="file" name="file" accept=".csv,text/csv" class="form-control mb-3" required aria-describedby="upload-note" />
+                <p id="upload-note" class="analysis-note">Bước này chỉ kiểm tra và xem trước; chưa lưu kết quả học sinh.</p>
+                <button class="btn btn-outline-secondary" type="submit">Kiểm tra và xem trước</button>
+            </form>
+        </section>
+    }
+</div>

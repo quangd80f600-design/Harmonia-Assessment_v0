@@ -1,0 +1,31 @@
+@model Harmonia.Web.ViewModels.RosterImportPage
+@{ ViewData["Title"] = "Nhập danh sách học sinh"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-action="Index">Lớp &amp; học sinh</a></li><li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Class.ClassId">Danh sách học sinh</a></li><li class="breadcrumb-item active" aria-current="page">Nhập CSV</li></ol></nav>
+        <h1>Nhập danh sách học sinh</h1><p class="analysis-description">Kiểm tra toàn bộ file trước khi tạo học sinh và khoảng thành viên lớp.</p>
+        <partial name="_ClassContext" model="Model.Class" />
+        <p class="analysis-note">Người ghi nhận: @Model.DemoActor</p>
+    </header>
+    @if (!Model.CanImport) { <p class="analysis-empty">Chưa bật chức năng ghi dữ liệu học thuật hoặc lớp không còn hoạt động.</p> }
+    else
+    {
+        <section class="analysis-section" aria-labelledby="roster-template-heading">
+            <h2 id="roster-template-heading"><span class="section-number">01.</span> Chuẩn bị danh sách</h2>
+            <p>CSV UTF-8, dấu phẩy, tối đa 1 MB và 200 học sinh. Mỗi dòng gồm <code>StudentCode,FullName,DateOfBirth,Gender,StartDate,EndDate</code>. Không nhập ID lớp; lớp được xác định từ trang này.</p>
+            <p>Nhập ngày theo định dạng yyyy-MM-dd, ví dụ 2026-11-10. Giới tính nhận Nam/Nữ hoặc Male/Female. Có thể để trống EndDate; nếu nhập, ngày này phải sau StartDate. Học sinh không còn thuộc lớp từ ngày EndDate.</p>
+            <p class="analysis-note">Tệp mẫu chỉ có dòng tên cột. Mã học sinh được đối chiếu chính xác, có phân biệt chữ hoa và chữ thường. Nếu mã đã tồn tại, họ tên (bỏ khoảng trắng đầu/cuối, không phân biệt hoa thường), ngày sinh và giới tính phải khớp hồ sơ. Hệ thống không tự sửa hồ sơ, bỏ qua dòng lỗi hay chuyển lớp. Nếu có thời gian tham gia lớp trùng lặp, kể cả trong cùng lớp, toàn bộ tệp sẽ không được nhập.</p>
+            <a class="btn btn-outline-secondary" asp-action="Template" asp-route-id="@Model.Class.ClassId">Tải mẫu danh sách CSV</a>
+        </section>
+        <section class="analysis-section" aria-labelledby="roster-upload-heading">
+            <h2 id="roster-upload-heading"><span class="section-number">02.</span> Tải lên và kiểm tra</h2>
+            <partial name="_ImportErrors" model="Model.Errors" />
+            <form asp-action="Preview" asp-route-id="@Model.Class.ClassId" method="post" enctype="multipart/form-data">
+                <label for="roster-file" class="form-label">File danh sách học sinh</label>
+                <input id="roster-file" type="file" name="file" accept=".csv,text/csv" class="form-control mb-3" required aria-describedby="roster-upload-note" />
+                <p id="roster-upload-note" class="analysis-note">Bước này chỉ kiểm tra và xem trước, chưa lưu học sinh hoặc thời gian tham gia lớp.</p>
+                <button class="btn btn-outline-secondary" type="submit">Kiểm tra và xem trước</button>
+            </form>
+        </section>
+    }
+</div>

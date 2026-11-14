@@ -1,0 +1,19 @@
+@model Harmonia.Web.ViewModels.WorksheetComposer
+@{ViewData["Title"]="Soạn phiếu bổ trợ";}
+<div class="analysis-page">
+<h1>Soạn phiếu bổ trợ</h1><p>@Model.StudentName · @Model.AssessmentName</p>
+<p class="alert alert-info">Bước 1: chọn nội dung → Bước 2: lưu nháp → Bước 3: kiểm tra và giao phiếu. Sau đó hoàn tất nhận xét phụ huynh.</p>
+<p>Đề xuất từ các Subskill có câu trả lời sai. Đây là nội dung nên ôn lại, không phải kết luận chắc chắn về năng lực. Dữ liệu thiếu không được tính là sai.</p>
+<p><a asp-controller="Assessments" asp-action="IndividualDiagnosis" asp-route-assessmentId="@Model.AssessmentId" asp-route-studentId="@Model.StudentId">Quay lại kết quả học sinh</a></p><p>Học liệu phù hợp được hiển thị ngay bên dưới. Các nút bổ sung học liệu mở thẻ mới để giữ trang đang soạn. Hãy lưu nháp trước khi thay đổi kho học liệu; sau đó mở lại phiếu và kiểm tra lựa chọn để cập nhật nội dung mới.</p>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(!Model.HasAttempt){<p class="analysis-empty">Chưa ghi nhận kết quả của học sinh trong đợt đánh giá này; chưa thể đề xuất phiếu từ câu sai.</p>}
+else if(Model.ResponseCount==0){<p class="analysis-empty">Đã có kết quả bài đánh giá nhưng chưa có dữ liệu trả lời từng câu; chưa thể đề xuất nội dung ôn tập.</p>}
+else if(Model.Skills.Count==0){<p class="analysis-empty">Không có câu trả lời sai trong dữ liệu đã ghi nhận.@if(Model.ResponseCount<Model.QuestionCount){<span> Còn thiếu dữ liệu của @(Model.QuestionCount-Model.ResponseCount) câu; không xem các câu này là đúng hoặc sai.</span>}</p>}
+else{
+<form asp-action="Compose" asp-route-assessmentId="@Model.AssessmentId" asp-route-studentId="@Model.StudentId" asp-route-packageId="@Model.PackageId" method="post" id="worksheet-form">
+<input asp-for="Input.Version" type="hidden"/><input name="submissionToken" type="hidden" value="@ViewData["SubmissionToken"]"/>
+<partial name="_ContentFields" model="Model" />
+<p id="worksheet-count" role="status"></p><button class="btn btn-primary" id="worksheet-save" disabled>Lưu nháp và kiểm tra người nhận</button><noscript><p>Vui lòng bật JavaScript để chọn nội dung phiếu.</p></noscript>
+</form>}
+</div>
+@section Scripts{<script src="~/js/worksheet-compose.js" asp-append-version="true"></script>}

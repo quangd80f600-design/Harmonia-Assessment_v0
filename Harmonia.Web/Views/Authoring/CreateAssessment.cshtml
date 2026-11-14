@@ -1,0 +1,22 @@
+@model Harmonia.Web.ViewModels.AssessmentCreatePage
+@{ ViewData["Title"] = "Tạo đợt đánh giá"; }
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Index">Câu hỏi &amp; đề</a><h1>Tạo đợt đánh giá</h1><p class="analysis-description">Chọn lớp, đề đã phát hành, giáo viên và ngày đánh giá. Sau khi tạo, bạn có thể nhập kết quả CSV.</p><p class="analysis-note">Giáo viên chỉ tạo đợt cho bản thân trong lớp được phân công. Quản lý có thể chọn giáo viên hợp lệ. Không tự tạo phân công hoặc sửa roster.</p></header>
+    <section class="analysis-section"><form asp-action="CreateAssessment" method="post"><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="mb-3"><label asp-for="Input.AssessmentName" class="form-label">Tên đợt đánh giá</label><input asp-for="Input.AssessmentName" class="form-control" maxlength="255" required /></div>
+        <div class="mb-3"><label asp-for="Input.ClassId" class="form-label">Lớp</label><select asp-for="Input.ClassId" class="form-select" required><option value="">Chọn lớp đang hoạt động</option>@foreach (var c in Model.Classes) { <option value="@c.Id">@c.Name · Khối @c.Grade · @c.AcademicYear</option> }</select></div>
+        <div class="mb-3"><label asp-for="Input.TestId" class="form-label">Đề</label><select asp-for="Input.TestId" class="form-select" required><option value="">Chọn đề đã phát hành</option>@foreach (var t in Model.Tests) { <option value="@t.Id">@t.Name · @t.QuestionCount câu</option> }</select></div>
+        <div class="mb-3"><label asp-for="Input.TeacherId" class="form-label">Giáo viên</label><select asp-for="Input.TeacherId" class="form-select" required><option value="">Chọn giáo viên đang hoạt động</option>@foreach (var t in Model.Teachers) { <option value="@t.Id">@t.Code · @t.Name</option> }</select></div>
+        <div class="mb-3"><label asp-for="Input.AssessmentDate" class="form-label">Ngày đánh giá</label><input asp-for="Input.AssessmentDate" type="date" class="form-control" required /></div>
+        <div class="mb-3"><label asp-for="Input.PlannedFollowupDate" class="form-label">Ngày dự kiến đánh giá lại</label><input asp-for="Input.PlannedFollowupDate" type="date" class="form-control" aria-describedby="planned-followup-help" /><span asp-validation-for="Input.PlannedFollowupDate" class="text-danger"></span><p id="planned-followup-help" class="analysis-note">Không bắt buộc. Harmonia sẽ nhắc trên Tổng quan công việc; chưa tạo đợt đánh giá lại.</p></div>
+        <p class="analysis-note">Nội dung kiến thức đã lưu trong đề phải cùng khối với lớp; phân công của giáo viên phải có hiệu lực vào ngày đánh giá. Đợt mới có trạng thái “Đang mở”. Khi nhập CSV, hệ thống kiểm tra danh sách học sinh tại ngày đánh giá và chỉ nhận kết quả còn thiếu.</p>
+        <button type="submit" class="btn btn-outline-secondary">Tạo đợt và nhập kết quả</button>
+    </form></section>
+    <section class="analysis-section"><h2>Phân công hiện có để đối chiếu</h2>
+        @if (Model.Assignments.Count == 0) { <p class="analysis-empty">Chưa có phân công giáo viên–lớp. Cần chuẩn bị dữ liệu nền hợp lệ trước khi tạo đợt đánh giá; không bỏ qua kiểm tra này.</p> }
+        <div class="table-responsive"><table class="table table-striped"><thead><tr><th scope="col">Lớp</th><th scope="col">Giáo viên</th><th scope="col">Từ ngày</th><th scope="col">Đến trước ngày</th></tr></thead><tbody>@foreach (var a in Model.Assignments)
+        {
+            var cls = Model.Classes.FirstOrDefault(c => c.Id == a.ClassId); var teacher = Model.Teachers.FirstOrDefault(t => t.Id == a.TeacherId);
+            if (cls is not null && teacher is not null) { <tr><td>@cls.Name</td><td>@teacher.Name</td><td>@a.StartDate.ToString("dd/MM/yyyy")</td><td>@(a.EndDate?.ToString("dd/MM/yyyy") ?? "Chưa kết thúc")</td></tr> }
+        }</tbody></table></div>
+    </section>
+</div>

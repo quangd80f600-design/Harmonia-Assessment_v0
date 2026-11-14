@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.TestCopyPage
+@{ ViewData["Title"] = "Sao chép đề"; }
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Test" asp-route-id="@Model.SourceId">Quay lại đề nguồn</a><h1>Sao chép đề</h1><p>Nguồn: @Model.SourceName</p><p class="analysis-note">Bản sao có ID mới, trạng thái Draft, giữ nguyên nội dung/đáp án/Subskill snapshot của nguồn. Không thay bằng Question hiện hành. Nếu cần bộ câu khác, tạo đề từ Question Bank.</p></header>
+    <section class="analysis-section"><form asp-action="CopyTest" asp-route-id="@Model.SourceId" method="post"><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="mb-3"><label asp-for="Input.TestName" class="form-label">Tên bản sao</label><input asp-for="Input.TestName" class="form-control" maxlength="255" required /></div><div class="mb-3"><label asp-for="Input.Description" class="form-label">Mô tả</label><textarea asp-for="Input.Description" class="form-control" rows="3" maxlength="10000"></textarea></div><button type="submit" class="btn btn-outline-secondary">Tạo bản sao nháp</button>
+    </form></section>
+</div>

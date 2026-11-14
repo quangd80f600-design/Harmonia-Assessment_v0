@@ -1,0 +1,16 @@
+@model Harmonia.Web.ViewModels.WorksheetGroupReview
+@{ViewData["Title"]="Kiểm tra phiếu và người nhận";}
+<div class="analysis-page"><h1>Kiểm tra phiếu và người nhận</h1><h2>@Model.PackageName</h2>
+<p>Nội dung: @string.Join(" · ",Model.Skills.Select(s=>s.Name)).</p><p>Gợi ý nhóm: @(Model.MatchMode=="Exact"?"Sai đúng tập nội dung đã chọn":Model.MatchMode=="All"?"Sai tất cả nội dung đã chọn":"Sai ít nhất một nội dung đã chọn"). Mọi học sinh nhận toàn bộ phiếu chung.</p>
+<p>@Model.QuestionCount câu luyện · @Model.TheoryCount mục lý thuyết · @Model.Students.Count học sinh trong nhóm đã chọn.</p>
+<p><a asp-action="Print" asp-route-id="@Model.PackageId" target="_blank" rel="noopener">Xem trước / In phiếu chung</a> · <a asp-controller="Interventions" asp-action="Details" asp-route-id="@Model.PackageId">Mở chi tiết gói</a></p>
+<ul>@foreach(var s in Model.Students){<li>@s.StudentCode · @s.FullName — đúng @s.CorrectCount/@s.ResponseCount câu đã ghi nhận</li>}</ul>
+@if(Model.CanConfirm){
+<form asp-action="Review" asp-route-id="@Model.PackageId" method="post" id="group-confirm-form">
+<input type="hidden" name="groupToken" value="@ViewData["GroupToken"]"/>
+<label><input type="checkbox" name="confirmed" value="true" required/> Tôi đã kiểm tra nội dung phiếu và toàn bộ nhóm người nhận.</label>
+<p>Giao gói sẽ khóa nội dung. Ngày phát thực tế chưa được tự ghi nhận; hệ thống không tự gửi phiếu.</p>
+<button class="btn btn-primary">Xác nhận giao cùng phiếu cho nhóm</button>
+</form>}
+else{<p class="alert alert-warning" role="alert">@Model.Message</p>}
+</div>

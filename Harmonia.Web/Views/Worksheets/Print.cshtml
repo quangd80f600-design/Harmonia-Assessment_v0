@@ -1,0 +1,13 @@
+@model Harmonia.Web.ViewModels.WorksheetPrint
+@{Layout=null;}
+<!doctype html><html lang="vi"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>@Model.Name</title><link rel="stylesheet" href="~/css/worksheet-print.css"/></head><body>
+<div class="print-tools"><button type="button" onclick="window.print()">In / Lưu PDF</button><a href="/Interventions/@Model.PackageId">Quay lại gói / Chọn học sinh</a>
+@if(Model.StudentName is null) { <p>Đây là phiếu chung, không có tên học sinh. Để in bản có tên, quay lại gói và chọn “In phiếu có tên” dưới người nhận.</p> }
+else { <p>Phiếu dành cho @Model.StudentName.</p> }</div>
+<main><header><strong>HARMONIA ASSESSMENT</strong><h1>@Model.Name</h1><p>@Model.ClassName · @Model.AssessmentName</p>@if(Model.StudentName is not null){<p>Học sinh: @Model.StudentName</p>}@if(Model.Status=="Draft"){<p>BẢN NHÁP — chưa giao</p>}</header>
+@if(!string.IsNullOrWhiteSpace(Model.Instructions)){<p class="preserve">@Model.Instructions</p>}
+@foreach(var skill in Model.Skills){<section><h2>@skill.Name</h2>
+@foreach(var t in Model.Theories.Where(t=>t.SubskillId==skill.Id)){<article><h3>@t.Title</h3><div class="preserve theory-content">@t.Content</div></article>}
+@foreach(var q in Model.Questions.Where(q=>q.SubskillId==skill.Id)){<article class="worksheet-question"><h3>Câu @q.Number.</h3><p class="preserve">@q.Text</p><div class="options"><p>A. @q.A</p><p>B. @q.B</p><p>C. @q.C</p><p>D. @q.D</p></div></article>}
+</section>}
+<footer>Harmonia · Phiếu ôn tập</footer></main></body></html>

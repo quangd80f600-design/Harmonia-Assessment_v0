@@ -1,0 +1,21 @@
+@model Harmonia.Web.ViewModels.InterventionCreateViewModel
+@{ ViewData["Title"] = "Tạo gói can thiệp"; }
+<div class="analysis-page">
+    <header class="analysis-header"><a asp-action="Index">Gói can thiệp</a><h1>Tạo gói can thiệp</h1>
+        <p class="analysis-description">Tạo gói nháp từ đợt đánh giá nguồn, sau đó thêm học liệu và chọn học sinh.</p>
+    </header>
+    <section class="analysis-section" aria-labelledby="create-heading">
+        <h2 id="create-heading">Thông tin gói</h2>
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <div class="mb-3"><label asp-for="Input.AssessmentId" class="form-label">Đợt đánh giá ban đầu</label>
+                <select asp-for="Input.AssessmentId" class="form-select" required><option value="">Chọn đợt đánh giá</option>
+                    @foreach (var a in Model.Assessments) { <option value="@a.AssessmentId">@a.AssessmentName · @a.ClassName · @a.AssessmentDate.ToString("dd/MM/yyyy")</option> }
+                </select>
+            </div>
+            <div class="mb-3"><label asp-for="Input.PackageName" class="form-label">Tên gói</label><input asp-for="Input.PackageName" class="form-control" maxlength="200" required /></div>
+            <div class="mb-3"><label asp-for="Input.Instructions" class="form-label">Hướng dẫn chung</label><textarea asp-for="Input.Instructions" class="form-control" rows="5" maxlength="10000"></textarea></div>
+            <button class="btn btn-outline-secondary" type="submit">Tạo gói nháp</button> <a asp-action="Index" class="btn btn-link">Quay lại</a>
+        </form>
+    </section>
+</div>

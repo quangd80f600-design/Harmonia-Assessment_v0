@@ -1,0 +1,10 @@
+@model Harmonia.Web.ViewModels.QuestionEditPage
+@{ ViewData["Title"] = "Sửa câu hỏi chưa dùng"; }
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Question" asp-route-id="@Model.Id">Chi tiết câu hỏi</a><h1>Sửa câu hỏi chưa dùng</h1><p>Server kiểm tra lại mọi liên kết đề trước khi lưu; không cập nhật snapshot lịch sử.</p></header>
+    <section class="analysis-section"><form asp-action="EditQuestion" asp-route-id="@Model.Id" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <input type="hidden" name="version" value="@Model.Version" />
+        <partial name="_QuestionFields" model="@(new Harmonia.Web.ViewModels.QuestionCreatePage(Model.Input, Model.Subskills))" />
+        <button class="btn btn-outline-secondary" type="submit">Lưu câu hỏi</button>
+    </form></section>
+</div>

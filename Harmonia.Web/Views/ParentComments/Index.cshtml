@@ -1,0 +1,171 @@
+@model Harmonia.Web.ViewModels.ParentCommentEditor
+@using Harmonia.Web.Services
+@using Harmonia.Web.ViewModels
+@{
+    ViewData["Title"] = "Soạn báo cáo học sinh";
+    var assessmentId = Model.Report.Assessment.AssessmentId;
+    var studentId = Model.Report.StudentId;
+    var editable = Model.CanWrite && (Model.Draft is null || Model.Draft.CanEdit) && Context.Response.StatusCode != 409;
+    var separate = Context.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<ParentCommentOptions>>().Value.SeparateSections;
+    var unsaved = ViewData["CommentHasUnsavedChanges"] is true;
+    var approvedReady = Model.Approved is { Stale: false } approvedRevision && (!separate || approvedRevision.SectionsSeparated);
+    var inline = ViewData["InlineObservationInput"] as InlineObservationInput ?? new() { PeriodStart = AcademicManagementService.Today, PeriodEnd = AcademicManagementService.Today };
+    string Status(string value) => value switch { "Approved" => "Đã duyệt", "Superseded" => "Đã thay thế", "Discarded" => "Đã hủy nháp", _ => "Bản nháp" };
+}
+<main class="comment-editor" data-editor-unsaved="@unsaved.ToString().ToLowerInvariant()">
+    <nav aria-label="Đường dẫn"><a asp-route="IndividualDiagnosis" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId">← Phân tích cá nhân</a></nav>
+    <h1>Soạn báo cáo học sinh</h1>
+    <p class="alert alert-info">Hoàn tất theo thứ tự: giao gói nếu cần → chọn ghi nhận học tập → lưu và duyệt nhận xét → kiểm tra bản in. Gói can thiệp không bắt buộc.</p>
+    @if(Model.CanWrite && Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<WorksheetOptions>>()?.Value.Enabled == true)
+    { <p><a asp-controller="Worksheets" asp-action="Compose" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" target="_blank" rel="noopener">Soạn phiếu bổ trợ cho học sinh (mở thẻ mới)</a></p> }
+    <p><strong>@Model.Report.StudentName</strong> · @Model.Report.StudentCode · @Model.Report.Assessment.ClassName</p>
+    <p>@Model.Report.Assessment.AssessmentName · @Model.Report.Assessment.AssessmentDate.ToString("dd/MM/yyyy")</p>
+    <div class="comment-progress" aria-label="Tình trạng hoàn thiện báo cáo">
+        <p><strong>1. Gói can thiệp:</strong> @(Model.Report.Packages.Count == 0 ? "Chưa giao gói cho học sinh trong đợt này (có thể bỏ qua)." : $"Đã giao {Model.Report.Packages.Count} gói.")
+            @if(Model.CanWrite) { <a asp-controller="Interventions" asp-action="Index">Xem / giao gói</a> <span aria-hidden="true">·</span> <a asp-controller="Interventions" asp-action="Create" asp-route-assessmentId="@assessmentId">Tạo gói cho đợt này</a> }
+        </p>
+        <p><strong>2. Ghi nhận học tập:</strong> @(Model.Input.ObservationId.HasValue ? "Đã chọn ghi nhận cho bản soạn." : "Chưa chọn; Gemini chỉ có thể gợi ý phần kết quả đánh giá.")</p>
+        <p><strong>3. Nhận xét:</strong> @(approvedReady ? "Đã duyệt và có thể xuất hiện trong bản in." : Model.Approved is { Stale: true } ? "Căn cứ đã đổi; bản duyệt cũ đang ẩn khỏi bản in." : Model.Draft is not null ? "Bản nháp chưa được duyệt; chưa xuất hiện trong bản in." : "Chưa có nhận xét đã duyệt.")</p>
+    </div>
+    <section class="comment-panel" aria-labelledby="report-results-heading">
+        <h2 id="report-results-heading">1. Kết quả đánh giá</h2>
+        <p>Điểm đã ghi nhận: <strong>@(Model.Report.HasAttempt ? Model.Report.Score?.ToString("0.##",System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) + " / 10" : "Chưa có kết quả đánh giá")</strong></p>
+        @if(Model.Report.TotalResponses>0) { <p>@Model.Report.CorrectResponses/@Model.Report.TotalResponses câu trả lời đúng · @Model.Report.TestQuestionCount câu trong đề.</p> }
+        else { <p>@Model.Report.TestQuestionCount câu trong đề.</p> }
+        <div class="table-responsive"><table class="table"><thead><tr><th>Nội dung kiến thức</th><th>Câu trong đề</th><th>Câu đã chấm</th><th>Đúng</th><th>Sai</th></tr></thead><tbody>
+        @foreach(var area in Model.Report.KnowledgeAreas)
+        {
+            <tr><th colspan="5">@area.Name</th></tr>
+            @foreach(var skill in area.Subskills)
+            { <tr><th>@skill.Name</th><td>@skill.QuestionCount</td><td>@(skill.ResponseCount>0?skill.ResponseCount.ToString():"—")</td><td>@(skill.ResponseCount>0?skill.CorrectCount.ToString():"—")</td><td>@(skill.ResponseCount>0?skill.IncorrectCount.ToString():"—")</td></tr> }
+        }
+        </tbody></table></div>
+        <p>Kết quả được lấy từ bài đánh giá đã lưu. Màn hình này chỉ soạn phần nhận xét, không sửa điểm hoặc câu trả lời.</p>
+    </section>
+    @if (TempData["CommentMessage"] is string message) { <p class="alert alert-success" role="status">@message</p> }
+    @foreach (var error in Model.Errors) { <p class="alert alert-danger" role="alert">@error</p> }
+    @if (Context.Response.StatusCode == 409)
+    { <p><a asp-route="StudentComment" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId">Tải bản mới nhất</a> trước khi lưu lại. Nội dung vừa nhập được giữ bên dưới để bạn sao chép.</p> }
+    @if (!Model.CanWrite) { <p class="alert alert-info">Bạn có quyền xem. Quyền soạn và duyệt yêu cầu phân công lớp phù hợp theo ngày đánh giá và hiện tại.</p> }
+    @if (Model.Draft is { CanEdit: false }) { <p class="alert alert-info">Bản nháp do giáo viên khác tạo. Liên hệ quản lý học thuật nếu cần bàn giao hoặc hủy nháp.</p> }
+    @if (Model.Draft is { Stale: true }) { <p class="alert alert-warning">Kết quả, ghi nhận học tập hoặc gói đã giao có thay đổi. Nội dung nháp vẫn được giữ. Hãy kiểm tra lại; nếu là nháp AI có căn cứ cũ, hủy nháp và tạo bản mới trước khi duyệt.</p> }
+    @if(Model.Approved is {Stale:true}) { <p class="alert alert-warning" data-approved-stale>Kết quả, ghi nhận học tập hoặc gói đã giao có thay đổi sau lần duyệt. Nhận xét cũ vẫn được giữ trong lịch sử, nhưng tạm ẩn trên báo cáo. Hãy kiểm tra, soạn và duyệt phiên bản mới.</p> }
+    <section class="comment-panel">
+        <h2>2. Nhận xét và ghi nhận học tập</h2>
+        @if (ViewData["InlineObservationMessage"] is string observationMessage) { <p class="alert alert-success" role="status">@observationMessage</p> }
+        @if (editable && Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<LearningObservationOptions>>()?.Value.Enabled == true)
+        {
+            <details class="comment-panel" open="@(ViewData["InlineObservationInput"] is not null && Model.Errors.Count > 0)">
+                <summary>Thêm ghi nhận học tập cho @Model.Report.StudentName</summary>
+                <p>Ghi nhận được lưu cho học sinh và lớp của báo cáo này. Sau khi lưu, ghi nhận mới sẽ được chọn vào bản soạn; nội dung nhận xét đang viết được giữ lại.</p>
+                <form asp-action="AddObservation" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" method="post" data-inline-observation>
+                    <input type="hidden" name="Draft.DraftId" value="@Model.Input.DraftId" /><input type="hidden" name="Draft.ExpectedVersion" value="@Model.Input.ExpectedVersion" />
+                    <input type="hidden" name="Draft.ExpectedApprovedId" value="@Model.Input.ExpectedApprovedId" /><input type="hidden" name="Draft.ObservationId" value="@Model.Input.ObservationId" />
+                    <input type="hidden" name="Draft.Text" value="@Model.Input.Text" /><input type="hidden" name="Draft.ProcessText" value="@Model.Input.ProcessText" />
+                    <label for="inline-period-start">Từ ngày</label><input id="inline-period-start" type="date" name="PeriodStart" value="@inline.PeriodStart?.ToString("yyyy-MM-dd")" required />
+                    <label for="inline-period-end">Đến hết ngày</label><input id="inline-period-end" type="date" name="PeriodEnd" value="@inline.PeriodEnd?.ToString("yyyy-MM-dd")" required />
+                    <label>Hoàn thành nhiệm vụ</label><partial name="~/Views/LearningObservations/_Choice.cshtml" model='new ObservationSelect("TaskCompletion",inline.TaskCompletion,ObservationRubric.Task,true,"Hoàn thành nhiệm vụ")' />
+                    <label>Tham gia học tập</label><partial name="~/Views/LearningObservations/_Choice.cshtml" model='new ObservationSelect("Participation",inline.Participation,ObservationRubric.Participation,true,"Tham gia học tập")' />
+                    <label>Chuẩn bị bài</label><partial name="~/Views/LearningObservations/_Choice.cshtml" model='new ObservationSelect("Preparation",inline.Preparation,ObservationRubric.Preparation,true,"Chuẩn bị bài")' />
+                    <label>Phối hợp học tập</label><partial name="~/Views/LearningObservations/_Choice.cshtml" model='new ObservationSelect("Cooperation",inline.Cooperation,ObservationRubric.Cooperation,true,"Phối hợp học tập")' />
+                    <p>Nếu đổi căn cứ của một nháp AI, hãy hủy nháp AI để tạo bản mới; nội dung cũ vẫn được giữ trong lịch sử.</p>
+                    <button class="btn btn-outline-primary" type="submit">Lưu ghi nhận và chọn vào báo cáo</button>
+                    <noscript><p>Hãy lưu bản nháp trước khi thêm ghi nhận để giữ lại nội dung vừa sửa.</p></noscript>
+                </form>
+            </details>
+        }
+        <p>Chọn ghi nhận phù hợp và viết nhận xét để gia đình theo dõi. Bản nháp chỉ dùng nội bộ; chỉ bản đã duyệt, còn khớp căn cứ mới xuất hiện trong báo cáo.</p>
+        <form asp-action="Save" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" method="post" id="student-report-draft">
+            <input type="hidden" name="DraftId" value="@Model.Input.DraftId" />
+            <input type="hidden" name="ExpectedVersion" value="@Model.Input.ExpectedVersion" />
+            <input type="hidden" name="ExpectedApprovedId" value="@Model.Input.ExpectedApprovedId" />
+            <fieldset disabled="@(!editable)">
+                <label for="observation">Ghi nhận quá trình học tập</label>
+                <select id="observation" name="ObservationId">
+                    <option value="">Không sử dụng ghi nhận</option>
+                    @foreach (var observation in Model.Observations)
+                    { <option value="@observation.Id" selected="@(Model.Input.ObservationId == observation.Id)">@observation.Start.ToString("dd/MM/yyyy") – @observation.End.ToString("dd/MM/yyyy") · @observation.Author</option> }
+                </select>
+                <p id="observation-guidance" role="status" data-ai-draft="@(Model.Draft?.Source == "Gemini" ? "true" : "false")" data-saved-observation="@Model.Draft?.ObservationId">@(Model.Input.ObservationId.HasValue ? "Gemini sẽ dùng các tiêu chí đã chọn để gợi ý đoạn quá trình học tập sau khi bạn lưu nháp." : "Chưa chọn ghi nhận: Gemini chỉ gợi ý đoạn kết quả đánh giá; đoạn quá trình sẽ để trống.")</p>
+                @if(Model.Draft?.Source == "Gemini") { <p class="alert alert-info">Đây là nháp AI. Muốn đổi ghi nhận làm căn cứ, hãy <a href="#discard-ai-draft">hủy nháp này</a> (nội dung cũ vẫn trong lịch sử), chọn ghi nhận mới rồi lưu nháp mới.</p> }
+                <p>Chỉ hiển thị ghi nhận của học sinh trong lớp này, với thời gian tham gia lớp hợp lệ. Bạn chọn rõ khoảng ghi nhận; hệ thống không tự ghép theo ngày.</p>
+                @foreach (var observation in Model.Observations)
+                {
+                    <ul data-observation-preview="@observation.Id" hidden="@(Model.Input.ObservationId != observation.Id)">
+                        <li>Hoàn thành nhiệm vụ: @ParentCommentEvidence.Choice(observation.Task, ObservationRubric.Task)</li>
+                        <li>Tham gia học tập: @ParentCommentEvidence.Choice(observation.Participation, ObservationRubric.Participation)</li>
+                        <li>Chuẩn bị bài: @ParentCommentEvidence.Choice(observation.Preparation, ObservationRubric.Preparation)</li>
+                        <li>Phối hợp học tập: @ParentCommentEvidence.Choice(observation.Cooperation, ObservationRubric.Cooperation)</li>
+                    </ul>
+                }
+                @if(separate && Model.Draft is {SectionsSeparated:false}) { <p class="alert alert-info">Bản cũ chưa tách hai phần. Hãy kiểm tra, phân chia nội dung hoặc tạo lại gợi ý trước khi duyệt.</p> }
+                <label for="comment-text">@(separate ? "Nhận xét kết quả đánh giá" : "Nội dung dành cho phụ huynh")</label>
+                <textarea id="comment-text" name="Text" maxlength="10000" rows="9">@Model.Input.Text</textarea>
+                @if(separate) { <label for="process-text">Ghi nhận quá trình học tập</label><textarea id="process-text" name="ProcessText" maxlength="10000" rows="5">@Model.Input.ProcessText</textarea><p>Chỉ viết theo ghi nhận đã chọn. Để trống khi chưa có ghi nhận phù hợp.</p> }
+                <p>Viết dựa trên kết quả và ghi nhận đã có. Không đưa ghi chú nội bộ hoặc nhận định chưa được kiểm chứng vào nội dung gửi gia đình.</p>
+
+            </fieldset>
+        </form>
+    </section>
+    <section class="comment-panel" aria-labelledby="report-plan-heading">
+        <h2 id="report-plan-heading">3. Định hướng học tập và bài tập đã giao</h2>
+        @if(Model.Report.Packages.Count==0)
+        { <p>Chưa có gói được giao cho học sinh trong đợt này. Nếu cần bài tập bổ trợ, hãy giao trước khi duyệt nhận xét; có thể tiếp tục báo cáo mà không có gói.</p> }
+        @foreach(var package in Model.Report.Packages)
+        {
+            <article><h3>@package.PackageName</h3>
+            @if(!string.IsNullOrWhiteSpace(package.Instructions)) { <p class="comment-text">@package.Instructions</p> }
+            <p><a asp-controller="Interventions" asp-action="Details" asp-route-id="@package.PackageId" target="_blank" rel="noopener">Xem gói / In phiếu bài tập (mở thẻ mới)</a></p></article>
+        }
+        <p>Báo cáo phụ huynh chỉ hiển thị tên gói và hướng dẫn đã giao. Phiếu bài tập được in riêng; nội dung câu hỏi và đáp án không ghép vào báo cáo.</p>
+    </section>
+    <section class="comment-panel" aria-labelledby="report-actions-heading">
+        <h2 id="report-actions-heading">Hoàn tất báo cáo</h2>
+        @if(Model.Approved is { Stale: true }) { <p class="alert alert-warning">Bản đã duyệt đang ẩn vì kết quả, ghi nhận hoặc gói đã giao thay đổi. Kiểm tra và duyệt lại trước khi in.</p> }
+        else if(!approvedReady) { <p class="alert alert-info">Bản in hiện chưa có nhận xét bằng lời. Hãy lưu và duyệt nhận xét nếu muốn phần này xuất hiện.</p> }
+        <p>Lưu nháp → kiểm tra và duyệt nhận xét → xem / in báo cáo. Việc duyệt áp dụng cho nhận xét đã lưu, không thay đổi kết quả đánh giá.</p>
+        <button type="submit" form="student-report-draft" class="btn btn-primary" disabled="@(!editable)">Lưu nháp</button>
+        @if (Model.Draft is { CanEdit: true } draft && Model.CanWrite && Context.Response.StatusCode != 409)
+        {
+            @if (Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.Gemini.GeminiOptions>>()?.Value.Enabled == true)
+            {
+                <form asp-action="Generate" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" method="post" class="comment-action" data-gemini-form>
+                    <input type="hidden" name="DraftId" value="@draft.Id" /><input type="hidden" name="ExpectedVersion" value="@draft.Version" />
+                    <p>Gợi ý dùng kết quả đánh giá và ghi nhận đã chọn, không gửi thông tin định danh hoặc ghi chú nội bộ. Hãy lưu mọi thay đổi trước khi tạo gợi ý.</p>
+                    <label><input type="checkbox" name="Confirmed" value="true" required /> Tôi đồng ý thay nội dung bản nháp đã lưu bằng gợi ý AI và sẽ kiểm tra trước khi duyệt.</label>
+                    <button type="submit" class="btn btn-outline-primary" disabled="@(draft.Stale || unsaved)">Gợi ý nhận xét bằng Gemini</button>
+                    <p data-gemini-status role="status"></p>
+                </form>
+            }
+            <form asp-action="Approve" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" method="post" class="comment-action">
+                <input type="hidden" name="DraftId" value="@draft.Id" /><input type="hidden" name="ExpectedVersion" value="@draft.Version" />
+                <label><input type="checkbox" name="Confirmed" value="true" required /> Tôi đã kiểm tra bản nháp đã lưu và đồng ý đưa nội dung này vào báo cáo phụ huynh.</label>
+                <button type="submit" class="btn btn-primary" disabled="@(draft.Stale || unsaved || string.IsNullOrWhiteSpace(draft.Text))">Duyệt nhận xét</button>
+            </form>
+            <form asp-action="Discard" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId" method="post" class="comment-action" id="discard-ai-draft">
+                <input type="hidden" name="DraftId" value="@draft.Id" /><input type="hidden" name="ExpectedVersion" value="@draft.Version" />
+                <label><input type="checkbox" name="Confirmed" value="true" required /> Xác nhận hủy bản nháp này, giữ nguyên bản đã duyệt.</label>
+                <button type="submit" class="btn btn-outline-secondary">Hủy bản nháp</button>
+            </form>
+        }
+        <p><a class="btn btn-outline-primary" asp-route="StudentReport" asp-route-assessmentId="@assessmentId" asp-route-studentId="@studentId">Xem / In báo cáo</a></p>
+    </section>
+    <details class="comment-panel"><summary>Nhận xét đã duyệt trong báo cáo</summary>
+        @if (Model.Approved is { } approved)
+        {
+            <p>Phiên bản @approved.Revision · @approved.Author · @approved.ApprovedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+
+            <div class="comment-text">@approved.Text</div>
+            @if(separate && !approved.SectionsSeparated) { <p>Đây là bản cũ chưa tách hai phần, đang ẩn khỏi báo cáo phụ huynh. Hãy soạn và duyệt phiên bản mới.</p> }
+            @if(!string.IsNullOrWhiteSpace(approved.ProcessText)) { <h3>Ghi nhận quá trình học tập</h3><div class="comment-text">@approved.ProcessText</div> }
+        }
+        else { <p>Chưa có nhận xét đã duyệt.</p> }
+    </details>
+    <details class="comment-panel"><summary>Lịch sử phiên bản</summary>
+        @foreach (var revision in Model.History)
+        { <article><h3>Phiên bản @revision.Revision · @Status(revision.Status)</h3><p>@revision.Author</p><div class="comment-text">@revision.Text</div><div class="comment-text">@revision.ProcessText</div></article> }
+        @if (Model.History.Count == 0) { <p>Chưa có phiên bản cũ.</p> }
+        <p>Tối đa 20 phiên bản cũ gần nhất.</p>
+    </details>
+</main>
+<script src="~/js/parent-comments.js" asp-append-version="true" defer></script>

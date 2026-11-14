@@ -1,0 +1,11 @@
+.comment-editor { max-width: 1000px; margin: auto; overflow-wrap: anywhere; }
+.comment-panel { background: white; border: 1px solid #c8dcdc; border-radius: 12px; padding: 24px; margin: 24px 0; }
+.comment-editor ::deep label { display: block; margin: 12px 0 8px; font-weight: 600; }
+.comment-editor ::deep textarea, .comment-editor ::deep select { width: 100%; border: 1px solid #9bb7ba; border-radius: 6px; padding: 12px; color: #172b35; background: white; }
+.comment-editor ::deep fieldset { min-width: 0; }
+.comment-editor ::deep fieldset:disabled { opacity: .75; }
+.comment-action { border-top: 1px solid #dce8e8; margin-top: 20px; padding-top: 12px; }
+.comment-text { white-space: pre-wrap; margin-bottom: 20px; }
+.comment-progress { background: #f1f7f7; border: 1px solid #c8dcdc; border-radius: 12px; padding: 12px 20px; margin: 20px 0; }
+.comment-progress p { margin: 8px 0; }
+@media(max-width: 600px) { .comment-panel { padding: 16px; } }

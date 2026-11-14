@@ -1,0 +1,9 @@
+@model Harmonia.Web.ViewModels.SubskillSummaryRow
+@using System.Globalization
+<div class="analysis-metrics">
+    <div><span>Số câu hỏi</span><strong>@Model.QuestionCount</strong></div>
+    <div><span>Lượt trả lời hợp lệ</span><strong>@Model.TotalResponses</strong></div>
+    <div><span>Lượt trả lời sai</span><strong>@Model.IncorrectResponses</strong></div>
+    <div><span>Tỷ lệ sai chung</span><strong>@(Model.ErrorPercentage is decimal pct ? pct.ToString("0.##", CultureInfo.GetCultureInfo("vi-VN")) + "%" : "Chưa có dữ liệu")</strong></div>
+</div>
+<p class="analysis-note mb-0">Tỷ lệ sai chung = tổng lượt trả lời sai / tổng lượt trả lời hợp lệ. Không có dữ liệu không đồng nghĩa với 0% sai.</p>

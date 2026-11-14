@@ -1,0 +1,90 @@
+@model Harmonia.Web.ViewModels.AssessmentQuestionDetailViewModel
+@using System.Globalization
+@using Harmonia.Web.ViewModels
+@{
+    ViewData["Title"] = "Phân tích câu hỏi theo đơn vị kiến thức";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var totals = new SubskillSummaryRow(Model.SubskillId, Model.SubskillCode, Model.SubskillName,
+        Model.Rows.Count, Model.Rows.Sum(r => r.TotalResponses), Model.Rows.Sum(r => r.IncorrectResponses));
+    var selected = Model.Rows.Where(r => r.ErrorPercentage.HasValue)
+        .OrderByDescending(r => r.ErrorPercentage).ThenByDescending(r => r.IncorrectResponses)
+        .ThenBy(r => r.QuestionNumber).FirstOrDefault();
+}
+<div class="analysis-page" data-question-analysis>
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Danh sách đợt đánh giá</a></li>
+            <li class="breadcrumb-item"><a asp-action="SubskillSummary" asp-route-id="@Model.Assessment.AssessmentId">Phân tích lớp</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Chi tiết câu hỏi</li>
+        </ol></nav>
+        <h1>Phân tích câu hỏi theo đơn vị kiến thức</h1>
+        <p class="analysis-description">Xem câu hỏi có tỷ lệ sai cao và đối chiếu nội dung, đáp án đã lưu trong đề.</p>
+        <partial name="_AnalysisContext" model="Model.Assessment" />
+    </header>
+    <section class="analysis-section" aria-labelledby="overview-heading">
+        <h2 id="overview-heading"><span class="section-number">01.</span> Tổng quan Subskill</h2>
+        <p class="skill-name">@Model.SubskillName <small class="skill-code">@Model.SubskillCode</small></p>
+        <partial name="_AnalysisMetrics" model="totals" />
+    </section>
+    <div class="question-workspace">
+    <section class="analysis-section question-master" aria-labelledby="chart-heading">
+        <h2 id="chart-heading"><span class="section-number">02.</span> Xếp hạng câu hỏi theo tỷ lệ sai</h2>
+        <p class="analysis-note">Chọn câu để xem nội dung. Dùng Tab và Enter / Space, hoặc phím ↑ ↓ Home End khi ở biểu đồ.</p>
+        <div class="analysis-scale" aria-hidden="true"><span>Tỷ lệ sai</span><span>0% — 100%</span></div>
+        <div class="question-workspace-scroll" role="region" aria-labelledby="chart-heading" tabindex="0">
+        <ul class="analysis-chart question-chart">
+        @foreach (var row in Model.Rows)
+        {
+            var active = row.QuestionInTestId == selected?.QuestionInTestId;
+            var label = row.ErrorPercentage is decimal pct ? pct.ToString("0.##", culture) + "%" : "Chưa có dữ liệu";
+            <li>
+                <button type="button" class="analysis-chart-row" data-question-select="question-@row.QuestionInTestId"
+                        aria-controls="question-@row.QuestionInTestId" aria-pressed="@(active ? "true" : "false")">
+                    <span class="chart-label"><strong>Câu @row.QuestionNumber</strong><small>@row.IncorrectResponses sai / @row.TotalResponses lượt trả lời</small></span>
+                    <span class="chart-track @(row.ErrorPercentage is null ? "chart-track-missing" : "")" aria-hidden="true">
+                        @if (row.ErrorPercentage is decimal width)
+                        {
+                            <span class="chart-fill" style="width: @(width.ToString(CultureInfo.InvariantCulture))%"></span>
+                        }
+                    </span>
+                    <span class="chart-value">@label<span class="visually-hidden"> tỷ lệ sai</span></span>
+                </button>
+            </li>
+        }
+        </ul>
+        </div>
+        <noscript><style>.question-panel:not(.is-default) { display: block; }</style><p class="analysis-note">Để chọn câu trên biểu đồ, hãy bật JavaScript. Nội dung các câu vẫn hiển thị bên dưới.</p></noscript>
+    </section>
+    <section class="analysis-section question-detail" aria-labelledby="detail-heading">
+        <h2 id="detail-heading"><span class="section-number">03.</span> Nội dung và phân tích câu hỏi</h2>
+        <div class="question-workspace-scroll" data-question-detail-scroll role="region" aria-labelledby="detail-heading" tabindex="0">
+        <p class="analysis-empty" data-question-placeholder hidden="@(selected is not null)">Chưa có dữ liệu tỷ lệ sai để chọn tự động. Chọn một câu trên biểu đồ để xem nội dung.</p>
+        <p class="visually-hidden" data-question-announcement role="status" aria-live="polite"></p>
+        @foreach (var row in Model.Rows)
+        {
+            var active = row.QuestionInTestId == selected?.QuestionInTestId;
+            <article id="question-@row.QuestionInTestId" class="question-panel @(active ? "is-default" : "")" data-question-panel data-question-title="Câu @row.QuestionNumber">
+                <h3>Câu @row.QuestionNumber</h3>
+                <p class="analysis-note">Nội dung và đáp án theo bản lưu trong đề (snapshot).</p>
+                <p class="question-text">@row.QuestionText</p>
+                <ul class="question-options">
+                @foreach (var option in new[] { (Key: "A", Text: row.OptionA), (Key: "B", Text: row.OptionB), (Key: "C", Text: row.OptionC), (Key: "D", Text: row.OptionD) })
+                {
+                    <li class="@(row.AnswerKey == option.Key ? "correct-option" : "")"><strong>@option.Key.</strong> @option.Text @if (row.AnswerKey == option.Key) { <span class="answer-label">Đáp án đúng</span> }</li>
+                }
+                </ul>
+                <dl class="question-stats">
+                    <div><dt>Lượt trả lời</dt><dd>@row.TotalResponses</dd></div>
+                    <div><dt>Đúng</dt><dd>@row.CorrectResponses</dd></div>
+                    <div><dt>Sai</dt><dd>@row.IncorrectResponses</dd></div>
+                    <div><dt>Tỷ lệ sai</dt><dd>@(row.ErrorPercentage is decimal pct ? pct.ToString("0.##", culture) + "%" : "Chưa có dữ liệu")</dd></div>
+                </dl>
+            </article>
+        }
+        </div>
+    </section>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/assessment-analysis.js" asp-append-version="true" defer></script>
+}

@@ -1,0 +1,109 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var manager = User.IsInRole("AcademicManager");
+    var teaching = User.IsInRole("Teacher") && long.TryParse(User.FindFirst("harmonia:teacher")?.Value, out var teachingId) && teachingId > 0;
+    var theoryLibrary = IsSection("Worksheets") && string.Equals(ViewContext.RouteData.Values["action"]?.ToString(), "Theories", StringComparison.OrdinalIgnoreCase);
+    var worksheetsEnabled = Context.RequestServices.GetService<Microsoft.Extensions.Options.IOptions<Harmonia.Web.Services.WorksheetOptions>>()?.Value.Enabled == true;
+    var mineView = Context.Request.Query["mine"] == "true";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    bool IsSection(params string[] controllers) => controllers.Contains(currentController, StringComparer.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#153E46" />
+    <title>@ViewData["Title"] — Harmonia</title>
+    <script type="importmap"></script>
+    <link rel="preload" href="~/fonts/be-vietnam-pro/BeVietnamPro-Regular.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/harmonia-tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Harmonia.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/harmonia-theme.css" asp-append-version="true" />
+</head>
+<body class="harmonia-app @(ViewData["CompactAuthoring"] is true ? "compact-authoring" : "") @(signedIn ? "is-authenticated" : "is-anonymous")">
+    <a class="harmonia-skip-link" href="#main-content">Đến nội dung chính</a>
+    <aside class="harmonia-sidebar">
+        <nav class="harmonia-navbar navbar navbar-expand-xl navbar-dark" aria-label="Điều hướng chính">
+            <div class="container-fluid">
+                <a class="navbar-brand harmonia-navbar-brand" asp-controller="Home" asp-action="Index">
+                    <img class="harmonia-navbar-logo" src="~/image/harmonia-logo.png" asp-append-version="true" alt="Harmonia Assessment" />
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#harmoniaNavbar" aria-controls="harmoniaNavbar" aria-expanded="false" aria-label="Mở hoặc đóng menu điều hướng">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div id="harmoniaNavbar" class="navbar-collapse collapse">
+                    <p class="sidebar-section-label">@(signedIn ? "Không gian làm việc" : "Harmonia Assessment")</p>
+                    <ul class="navbar-nav sidebar-menu">
+                    @if (signedIn)
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" aria-current="@(IsSection("Home") ? "page" : null)"><partial name="_NavigationIcon" model='@("dashboard")' /><span>Tổng quan</span></a></li>
+                        @if (manager)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Teachers" asp-action="Index" aria-current="@(IsSection("Teachers") ? "page" : null)"><partial name="_NavigationIcon" model='@("teachers")' /><span>Giáo viên &amp; phân công</span></a></li>
+                        }
+                        <li class="nav-item"><a class="nav-link" asp-controller="Classes" asp-action="Index" aria-current="@(IsSection("Classes") && !mineView ? "page" : null)"><partial name="_NavigationIcon" model='@("classes")' /><span>@(manager ? "Lớp & học sinh" : "Lớp của tôi")</span></a></li>
+                        @if (manager && teaching) {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Classes" asp-action="Index" asp-route-mine="true" aria-current="@(IsSection("Classes") && mineView ? "page" : null)"><partial name="_NavigationIcon" model='@("classes")' /><span>Lớp tôi phụ trách</span></a></li>
+                        }
+                        <li class="nav-item"><a class="nav-link" asp-controller="Authoring" asp-action="Index" aria-current="@(IsSection("Authoring") ? "page" : null)"><partial name="_NavigationIcon" model='@("authoring")' /><span>Câu hỏi &amp; đề</span></a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Assessments" asp-action="Index" aria-current="@(IsSection("Assessments", "AssessmentImports", "StudentReports") ? "page" : null)"><partial name="_NavigationIcon" model='@("assessments")' /><span>Đợt đánh giá</span></a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Interventions" asp-action="Index" aria-current="@((IsSection("Interventions", "InterventionFollowups", "Worksheets") && !theoryLibrary) ? "page" : null)"><partial name="_NavigationIcon" model='@("interventions")' /><span>Can thiệp</span></a></li>
+                        @if (worksheetsEnabled) {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Worksheets" asp-action="Theories" aria-current="@(theoryLibrary ? "page" : null)"><partial name="_NavigationIcon" model='@("authoring")' /><span>Kho lý thuyết</span></a></li>
+                        }
+                        @if (!manager)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Teachers" asp-action="Index" aria-current="@(IsSection("Teachers") ? "page" : null)"><partial name="_NavigationIcon" model='@("teachers")' /><span>Hồ sơ &amp; phân công</span></a></li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login" aria-current="page"><partial name="_NavigationIcon" model='@("profile")' /><span>Đăng nhập</span></a></li>
+                    }
+                    </ul>
+                    <div class="sidebar-account">
+                    @if (signedIn)
+                    {
+                        <a class="nav-link sidebar-profile" asp-controller="Account" asp-action="ChangePassword" aria-label="Đổi mật khẩu cho @(User.Identity?.Name)" aria-current="@(IsSection("Account") ? "page" : null)">
+                            <span class="sidebar-avatar" aria-hidden="true">@(manager ? "QL" : "GV")</span><span><strong>@(User.Identity?.Name)</strong><small>@(manager ? teaching ? "Quản lý · Giáo viên" : "Quản lý học thuật" : "Giáo viên")</small></span>
+                        </a>
+                        <form asp-controller="Account" asp-action="Logout" method="post"><button class="sidebar-logout" type="submit"><partial name="_NavigationIcon" model='@("logout")' /><span>Đăng xuất</span></button></form>
+                    }
+                    else
+                    {
+                        <p class="sidebar-welcome">Đánh giá rõ ràng.<br />Học tập có định hướng.</p><p class="sidebar-caption">Dành cho giáo viên và quản lý học vụ.</p>
+                    }
+                    </div>
+                    <p class="sidebar-tagline">Đánh giá · Tiến bộ · Học tập</p>
+                </div>
+            </div>
+        </nav>
+    </aside>
+    <div class="harmonia-workspace">
+        <header class="harmonia-topbar">
+            <span class="harmonia-topbar-caption">@(signedIn ? manager ? "Không gian quản lý học vụ" : "Không gian giảng dạy" : "Chào mừng đến với Harmonia")</span>
+            <span class="harmonia-role-badge">@(signedIn ? manager ? teaching ? "Quản lý · Giáo viên" : "Quản lý học thuật" : "Giáo viên" : "Truy cập nội bộ")</span>
+        </header>
+        <div class="container harmonia-content">
+            <main role="main" id="main-content" tabindex="-1">
+                @if (TempData["AuthoringMessage"] is string authoringMessage)
+                {
+                    <p class="alert alert-success" role="status">@authoringMessage</p>
+                }
+                @RenderBody()
+            </main>
+        </div>
+        <footer class="harmonia-footer"><span>© @DateTime.Today.Year Harmonia Assessment</span><span>Đánh giá · Tiến bộ · Học tập</span></footer>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (ViewData["CompactAuthoring"] is true) {
+        <script>document.querySelectorAll('.harmonia-sidebar a, .harmonia-sidebar button').forEach(el => { if (!el.title) el.title = el.getAttribute('aria-label') || el.textContent.trim(); });</script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

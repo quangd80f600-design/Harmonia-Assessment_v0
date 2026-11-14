@@ -1,0 +1,10 @@
+@model Harmonia.Web.ViewModels.QuestionCreatePage
+@{ ViewData["Title"] = "Tạo câu hỏi MCQ"; }
+<div class="analysis-page"><header class="analysis-header"><a asp-action="Questions">Ngân hàng câu hỏi</a><h1>Tạo câu hỏi MCQ</h1><p class="analysis-description">Bốn lựa chọn khác nhau A–D và đúng một đáp án. Câu mới được lưu vào ngân hàng dùng chung; giáo viên tạo bản sao khi cần điều chỉnh, quản lý chỉ sửa câu chưa thuộc đề.</p></header>
+    @if (ViewData["CopiedQuestionCode"] is string sourceCode) { <p class="alert alert-info" role="status">Đang tạo bản sao từ @sourceCode. Nhập mã câu hỏi mới rồi điều chỉnh nội dung; bản gốc và snapshot không thay đổi.</p> }
+    <section class="analysis-section"><form asp-action="CreateQuestion" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <partial name="_QuestionFields" model="Model" />
+        <button type="submit" class="btn btn-outline-secondary">Lưu câu hỏi mới</button>
+    </form></section>
+</div>

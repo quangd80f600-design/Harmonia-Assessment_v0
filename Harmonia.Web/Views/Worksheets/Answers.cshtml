@@ -1,0 +1,7 @@
+@model Harmonia.Web.ViewModels.WorksheetAnswerPage
+@{Layout=null;}
+<!doctype html><html lang="vi"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Đáp án — @Model.Name</title><link rel="stylesheet" href="~/css/worksheet-print.css"/></head><body>
+<div class="print-tools"><button type="button" onclick="window.print()">In / Lưu PDF đáp án</button><a href="/Interventions/@Model.PackageId">Quay lại gói</a></div><main>
+<h1>Đáp án dành cho giáo viên</h1><h2>@Model.Name</h2>
+@foreach(var q in Model.Answers){<article class="worksheet-question"><h3>Câu @q.Number: @q.Key</h3><p class="preserve">@q.Explanation</p></article>}
+</main></body></html>

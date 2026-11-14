@@ -1,0 +1,31 @@
+@model Harmonia.Web.ViewModels.RosterPreviewViewModel
+@{ ViewData["Title"] = "Xem trước danh sách học sinh"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-action="Index">Lớp &amp; học sinh</a></li><li class="breadcrumb-item"><a asp-action="Import" asp-route-id="@Model.Class.ClassId">Nhập CSV</a></li><li class="breadcrumb-item active" aria-current="page">Xem trước</li></ol></nav>
+        <h1>Xem trước danh sách học sinh</h1><p class="analysis-description">Chưa ghi dữ liệu. Kiểm tra đúng lớp và ngày vào/kết thúc của từng học sinh.</p>
+        <partial name="_ClassContext" model="Model.Class" />
+        <p class="analysis-note">Tệp: @Model.FileName · Hết hạn lúc @Model.ExpiresAt.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm") (giờ Việt Nam).</p>
+        <div class="analysis-metrics"><div><span>Học sinh trong file</span><strong>@Model.Students.Count</strong></div><div><span>Tạo hồ sơ mới</span><strong>@Model.NewCount</strong></div><div><span>Dùng hồ sơ hiện có</span><strong>@Model.ExistingCount</strong></div><div><span>Khoảng vào lớp mới</span><strong>@Model.Students.Count</strong></div></div>
+    </header>
+    <section class="analysis-section" aria-labelledby="roster-preview-heading">
+        <h2 id="roster-preview-heading"><span class="section-number">01.</span> Danh sách dự kiến</h2>
+        <div class="table-responsive"><table class="table table-striped align-middle">
+            <thead><tr><th scope="col">Mã học sinh</th><th scope="col">Họ tên</th><th scope="col">Ngày sinh</th><th scope="col">Giới tính</th><th scope="col">Ngày vào</th><th scope="col">Ngày kết thúc</th><th scope="col">Thao tác / hồ sơ</th></tr></thead>
+            <tbody>@foreach (var s in Model.Students)
+            {
+                <tr><td>@s.StudentCode</td><th scope="row">@s.FullName</th><td>@s.DateOfBirth.ToString("dd/MM/yyyy")</td><td>@(s.Gender == "Male" ? "Nam" : "Nữ")</td><td>@s.StartDate.ToString("dd/MM/yyyy")</td><td>@(s.EndDate?.ToString("dd/MM/yyyy") ?? "Chưa kết thúc")</td><td>@(s.ExistingStudentId.HasValue ? "Dùng hồ sơ hiện có" : "Tạo hồ sơ mới") · @(s.Status == "Active" ? "Đang hoạt động" : "Ngừng hoạt động")</td></tr>
+            }</tbody>
+        </table></div>
+    </section>
+    <section class="analysis-section" aria-labelledby="roster-confirm-heading">
+        <h2 id="roster-confirm-heading"><span class="section-number">02.</span> Xác nhận toàn bộ danh sách</h2>
+        <p class="analysis-note">Không thay đổi thông tin/trạng thái học sinh đã tồn tại. Không tự đóng membership cũ. Lỗi ở bất kỳ dòng nào thì không lưu một phần. Server kiểm tra lại hồ sơ và khoảng thành viên trước khi lưu.</p>
+        @if (ViewData["ConfirmError"] is string error) { <p class="text-danger" role="alert">@error</p> }
+        <form asp-action="Confirm" asp-route-id="@Model.Class.ClassId" method="post">
+            <input type="hidden" name="token" value="@Model.Token" />
+            <div class="form-check mb-3"><input id="confirmed" type="checkbox" class="form-check-input" name="confirmed" value="true" required /><label for="confirmed" class="form-check-label">Tôi đã kiểm tra đúng lớp, danh sách và khoảng thời gian vào lớp</label></div>
+            <button type="submit" class="btn btn-outline-secondary">Xác nhận nhập danh sách</button> <a asp-action="Import" asp-route-id="@Model.Class.ClassId" class="btn btn-link">Chọn file khác</a>
+        </form>
+    </section>
+</div>

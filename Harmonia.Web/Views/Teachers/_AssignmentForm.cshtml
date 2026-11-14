@@ -1,0 +1,30 @@
+@model Harmonia.Web.ViewModels.TeacherDetailsPage
+<p class="analysis-note">Tính ngày bắt đầu, không tính ngày kết thúc. Phân công liền kề được phép; không tự sửa hoặc đóng lịch sử.</p>
+@if (Model.AssignmentClassContext is { } context)
+{
+    <p class="alert alert-info" data-assignment-context="@context.ClassId">Phân công cho <strong>@context.ClassName · @context.AcademicYear</strong>. <a asp-controller="Classes" asp-action="Details" asp-route-id="@context.ClassId">Quay về lớp</a></p>
+}
+@if (Model.Status != "Active") { <p class="alert alert-warning">Giáo viên đã ngừng hoạt động; chưa thể thêm phân công.</p> }
+<form asp-action="Assignments" asp-route-id="@Model.Id" method="post" class="row g-3" data-assignment-form>
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="col-md-5"><label for="ClassId" class="form-label">Lớp</label>
+    @if (Model.AssignmentClassContext is { } selectedClass)
+    {
+        <input type="hidden" name="contextClassId" value="@selectedClass.ClassId" />
+        <input type="hidden" name="ClassId" value="@selectedClass.ClassId" />
+        <input id="ClassId" class="form-control" value="@selectedClass.ClassName · @selectedClass.AcademicYear" readonly />
+        @if (selectedClass.Status != "Active") { <p class="text-danger">Lớp đã ngừng hoạt động; chưa thể thêm phân công.</p> }
+    }
+    else
+    {
+        <select name="ClassId" id="ClassId" class="form-select" required><option value="">Chọn lớp</option>
+            @if (Model.Assignment.ClassId > 0 && !Model.Classes.Any(c => c.Id == Model.Assignment.ClassId)) { <option value="@Model.Assignment.ClassId" selected disabled>Lớp không còn khả dụng — chọn lại</option> }
+            @foreach (var cls in Model.Classes) { <option value="@cls.Id" selected="@(cls.Id == Model.Assignment.ClassId)">@cls.Name · @cls.AcademicYear</option> }
+        </select>
+        @if (Model.Classes.Count == 0) { <p class="text-muted">Chưa có lớp đang hoạt động. <a asp-controller="Classes" asp-action="Create">Tạo lớp</a>.</p> }
+    }
+    @Html.ValidationMessage("ClassId", null, new { @class = "text-danger" })</div>
+    <div class="col-md-3"><label for="StartDate" class="form-label">Ngày bắt đầu</label><input name="StartDate" id="StartDate" type="date" class="form-control" value="@Model.Assignment.StartDate?.ToString("yyyy-MM-dd")" required />@Html.ValidationMessage("StartDate", null, new { @class = "text-danger" })</div>
+    <div class="col-md-3"><label for="EndDate" class="form-label">Ngày kết thúc (tùy chọn)</label><input name="EndDate" id="EndDate" type="date" class="form-control" value="@Model.Assignment.EndDate?.ToString("yyyy-MM-dd")" />@Html.ValidationMessage("EndDate", null, new { @class = "text-danger" })</div>
+    <div class="col-12"><button class="btn btn-primary" type="submit" disabled="@(Model.Status != "Active" || Model.AssignmentClassContext is { Status: not "Active" })">Lưu phân công</button></div>
+</form>

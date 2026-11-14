@@ -1,0 +1,72 @@
+@using System.Text.Json
+@model Harmonia.Web.ViewModels.TestComposePage
+@{
+    ViewData["Title"] = Model.EditId.HasValue ? "Chỉnh sửa đề nháp" : "Soạn đề đánh giá";
+    ViewData["CompactAuthoring"] = true;
+    var selected = Model.Input.Picks.Where(p => p.Number.HasValue).OrderBy(p => p.Number).ToArray();
+    var selectedIds = selected.Select(p => p.QuestionId).ToHashSet();
+    var initial = new {
+        grade = Model.Input.Grade, search = Model.Input.Search ?? "", hasErrors = !ViewData.ModelState.IsValid, editing = Model.EditId.HasValue,
+        retainedIds = ViewData["RetainedQuestionIds"] as IReadOnlyList<string> ?? Array.Empty<string>(),
+        selected = selected.Select(p => {
+            var q = Model.Questions.FirstOrDefault(q => q.Id == p.QuestionId);
+            return new { id = p.QuestionId.ToString(), code = q?.Code ?? "Câu hỏi không còn tồn tại", text = q?.Text ?? "Hãy bỏ câu này trước khi lưu.",
+                subskillName = q?.SubskillName ?? "", grade = q?.Grade ?? (short)0 };
+        })
+    };
+}
+<link rel="stylesheet" href="~/css/test-workspace.css" asp-append-version="true" />
+<div class="test-workspace analysis-page" data-test-workspace
+     data-tree-url="@Url.Action("WorkspaceTaxonomy")" data-skills-url="@Url.Action("WorkspaceSkills")" data-bank-url="@Url.Action("WorkspaceQuestions")">
+    <header class="workspace-header"><div><a asp-action="Tests">Quản lý đề</a><h1>@ViewData["Title"]</h1><p>Chọn kiến thức, thêm câu hỏi và sắp xếp đề theo cách bạn muốn.</p></div><span class="workspace-mode">@(Model.EditId.HasValue ? "Đang chỉnh sửa bản nháp" : "Đề mới · Chưa lưu")</span></header>
+    <nav class="workspace-tabs" role="tablist" aria-label="Các vùng soạn đề">
+        <button type="button" role="tab" id="tab-taxonomy" aria-controls="panel-taxonomy" aria-selected="false" data-panel="taxonomy">Kiến thức</button>
+        <button type="button" role="tab" id="tab-bank" aria-controls="panel-bank" aria-selected="true" data-panel="bank">Câu hỏi</button>
+        <button type="button" role="tab" id="tab-selected" aria-controls="panel-selected" aria-selected="false" data-panel="selected">Đã chọn <span data-selected-count>@selected.Length</span></button>
+    </nav>
+    <p class="visually-hidden" role="status" aria-live="polite" id="workspace-announcement"></p>
+    <div class="workspace-grid">
+        <section class="workspace-panel taxonomy-panel" id="panel-taxonomy" aria-labelledby="taxonomy-heading" data-panel-name="taxonomy">
+            <header class="panel-heading"><span class="step-number">1</span><div><h2 id="taxonomy-heading">Chọn kiến thức</h2><p>Mở từng nhánh để tìm kỹ năng.</p></div></header>
+            <div class="panel-controls">
+                <label for="workspace-grade" class="form-label">Khối của đề</label><select id="workspace-grade" class="form-select">@for(short g=6;g<=12;g++){<option value="@g" selected="@(g==Model.Input.Grade)">Khối @g</option>}</select>
+                <label for="skill-search" class="form-label mt-3">Tìm kỹ năng</label><input id="skill-search" type="search" class="form-control" maxlength="100" placeholder="Tên hoặc mã kỹ năng" />
+                <button type="button" class="workspace-link" id="all-knowledge">Xem toàn bộ câu hỏi của khối</button>
+            </div>
+            <div class="panel-scroll"><div id="skill-results" hidden></div><div id="taxonomy-tree" aria-label="Cây kiến thức"><p class="workspace-empty">Đang tải các bài học…</p></div></div>
+        </section>
+        <section class="workspace-panel bank-panel" id="panel-bank" aria-labelledby="bank-heading" data-panel-name="bank">
+            <header class="panel-heading"><span class="step-number">2</span><div><h2 id="bank-heading">Ngân hàng câu hỏi</h2><p id="bank-scope">Khối @Model.Input.Grade</p></div></header>
+            <div class="panel-controls"><form id="question-search-form">
+                <label for="question-search" class="form-label">Tìm câu hỏi</label><div class="search-row"><input id="question-search" type="search" class="form-control" maxlength="100" value="@Model.Input.Search" placeholder="Mã hoặc nội dung câu hỏi" /><button class="btn btn-outline-secondary" type="submit">Tìm</button></div>
+            </form><p id="bank-count" class="workspace-note">Chọn câu phù hợp rồi bấm “Thêm vào đề”.</p></div>
+            <div class="panel-scroll" id="question-bank" aria-busy="true">
+                @foreach(var q in Model.Questions.Where(q => !selectedIds.Contains(q.Id)).Take(20)) {
+                    <article class="question-card" data-question-id="@q.Id"><strong>@q.Code</strong><p>@q.Text</p><small>@q.SubskillName · Khối @q.Grade</small><button type="button" class="btn btn-outline-secondary" disabled>Đang tải…</button></article>
+                }
+                <p class="workspace-empty" data-loading-bank>Đang tải câu hỏi…</p>
+            </div>
+            <footer class="bank-pagination"><button type="button" id="bank-previous" class="btn btn-sm btn-outline-secondary" disabled>Trang trước</button><span id="bank-page">Trang 1</span><button type="button" id="bank-next" class="btn btn-sm btn-outline-secondary" disabled>Trang sau</button></footer>
+        </section>
+        <section class="workspace-panel selected-panel" id="panel-selected" aria-labelledby="selected-heading" data-panel-name="selected">
+            <header class="panel-heading"><span class="step-number">3</span><div><h2 id="selected-heading">Đã chọn @selected.Length câu</h2><p>Tối đa 200 câu · Sắp theo thứ tự mong muốn.</p></div></header>
+            <form id="test-editor" asp-action="@(Model.EditId.HasValue ? "EditTest" : "CreateTest")" asp-route-id="@Model.EditId" method="post">
+                <div class="selected-settings">
+                    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                    <input asp-for="Input.Version" type="hidden" /><input asp-for="Input.Grade" type="hidden" /><input asp-for="Input.Search" type="hidden" />
+                    <label asp-for="Input.TestName" class="form-label">Tên đề <span aria-hidden="true">*</span></label><input asp-for="Input.TestName" class="form-control" maxlength="255" required placeholder="Ví dụ: Đánh giá đọc hiểu – tuần 4" />
+                    <details class="description-toggle"><summary>Thêm mô tả (tùy chọn)</summary><label asp-for="Input.Description" class="visually-hidden">Mô tả đề</label><textarea asp-for="Input.Description" class="form-control mt-2" rows="2" maxlength="10000"></textarea></details>
+                    <p id="grade-warning" class="workspace-warning" role="status" hidden></p>
+                </div>
+                <div id="selected-fields">@for(var i=0;i<selected.Length;i++){<input type="hidden" name="Input.Picks[@i].QuestionId" value="@selected[i].QuestionId" /><input type="hidden" name="Input.Picks[@i].Number" value="@selected[i].Number" />}</div>
+                <ol id="selected-questions" class="panel-scroll selected-list">
+                    @foreach(var p in selected){var q=Model.Questions.FirstOrDefault(q=>q.Id==p.QuestionId);<li data-selected-id="@p.QuestionId"><strong>@q?.Code</strong><p>@q?.Text</p></li>}
+                </ol>
+                <footer class="save-draft"><p id="selection-summary">Lựa chọn được giữ khi bạn đổi bộ lọc.</p><button type="submit" id="save-draft" class="btn btn-primary">@(Model.EditId.HasValue ? "Lưu thay đổi đề nháp" : "Lưu đề nháp")</button><small>Câu hỏi chỉ được lưu vào đề khi bạn bấm nút này.</small></footer>
+            </form>
+        </section>
+    </div>
+    <noscript><p class="alert alert-warning">Hãy bật JavaScript để mở cây kiến thức, chọn và sắp xếp câu hỏi trong màn hình này.</p></noscript>
+    <script id="workspace-initial" type="application/json">@Html.Raw(JsonSerializer.Serialize(initial))</script>
+</div>
+<script src="~/js/test-workspace.js" asp-append-version="true" defer></script>

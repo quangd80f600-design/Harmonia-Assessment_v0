@@ -1,0 +1,23 @@
+@model Harmonia.Web.ViewModels.CreateClassInput
+@{ ViewData["Title"] = "Tạo lớp"; }
+<div class="analysis-page">
+    <header class="analysis-header">
+        <nav aria-label="Đường dẫn"><ol class="breadcrumb"><li class="breadcrumb-item"><a asp-action="Index">Lớp &amp; học sinh</a></li><li class="breadcrumb-item active" aria-current="page">Tạo lớp</li></ol></nav>
+        <h1>Tạo lớp</h1>
+        <p class="analysis-description">Mã lớp duy nhất trong cùng năm học. Lớp mới có trạng thái Đang hoạt động.</p>
+        <p class="analysis-note">Chỉ quản lý học vụ được tạo lớp; người ghi nhận lấy từ tài khoản đang đăng nhập.</p>
+    </header>
+    <section class="analysis-section" aria-labelledby="create-heading">
+        <h2 id="create-heading">Thông tin lớp</h2>
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="ClassCode" class="form-label"></label><input asp-for="ClassCode" class="form-control" maxlength="50" required /></div>
+                <div class="col-md-6"><label asp-for="ClassName" class="form-label"></label><input asp-for="ClassName" class="form-control" maxlength="150" required /></div>
+                <div class="col-md-6"><label asp-for="Grade" class="form-label"></label><select asp-for="Grade" class="form-select">@for (var grade = 6; grade <= 12; grade++) { <option value="@grade">Khối @grade</option> }</select></div>
+                <div class="col-md-6"><label asp-for="AcademicYear" class="form-label"></label><input asp-for="AcademicYear" class="form-control" placeholder="2026-2027" maxlength="9" aria-describedby="year-note" required /><p id="year-note" class="analysis-note">Hai năm liên tiếp theo dạng YYYY-YYYY.</p></div>
+            </div>
+            <div class="mt-3"><button class="btn btn-outline-secondary" type="submit">Tạo lớp</button> <a class="btn btn-link" asp-action="Index">Quay lại</a></div>
+        </form>
+    </section>
+</div>
