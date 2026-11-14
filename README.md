@@ -85,12 +85,14 @@ Trạng thái chi tiết: [kế hoạch và tiến độ](docs/quan-ly-du-an/ke-
 1. Mở **pgAdmin 4**, kết nối tới máy chủ PostgreSQL.
 2. Nhấp chuột phải vào **Databases** → **Create** → **Database…**, đặt tên `harmonia` → **Save**.
 3. Nhấp chuột phải vào CSDL `harmonia` → **Query Tool** → **Open File** → chọn `database/schema.sql` → **Execute (F5)**. Lược đồ tạo đủ 34 bảng trong hai schema `public` và `auth`.
+4. (Tùy chọn) Trong **Query Tool**, mở tiếp `database/seed_demo.sql` → **Execute (F5)** để nạp dữ liệu mô phỏng: lớp 9A1 gồm 30 học sinh, 396 câu hỏi, 3 đề, 2 đợt đánh giá đã có kết quả, phiếu ôn tập và nhận xét mẫu. Dữ liệu không kèm tài khoản đăng nhập.
 
 Hoặc dùng dòng lệnh:
 
 ```bash
 createdb -U postgres harmonia
 psql -U postgres -d harmonia -v ON_ERROR_STOP=1 -f database/schema.sql
+psql -U postgres -d harmonia -v ON_ERROR_STOP=1 -f database/seed_demo.sql   # dữ liệu mô phỏng (tùy chọn)
 ```
 
 ### Bước 2. Cấu hình chuỗi kết nối
@@ -131,7 +133,9 @@ dotnet run --project Harmonia.Web --launch-profile https
 
 Trong Visual Studio: chọn cấu hình **https** rồi nhấn **Ctrl + F5**. Mở `https://localhost:7126` và đăng nhập bằng tài khoản ở Bước 4.
 
-Sau khi đăng nhập, Quản lý học vụ tạo lớp, nhập danh sách học sinh, tạo hồ sơ giáo viên và phân công; câu hỏi được tạo trong mục **Câu hỏi & đề** hoặc nhập từ CSV.
+Nếu đã nạp dữ liệu mô phỏng: mở **Đợt đánh giá** → **ĐÁNH GIÁ ĐỊNH KỲ LỚP 9** để xem tổng quan, phân tích lớp, chẩn đoán từng học sinh và chia nhóm ôn tập. Để xem dưới vai trò Giáo viên, vào **Giáo viên & phân công** → hồ sơ **Vương Thuỳ Trang** (phụ trách lớp 9A1) → cấp tài khoản với mật khẩu tạm, rồi đăng nhập bằng tài khoản đó.
+
+Nếu dùng CSDL trống: Quản lý học vụ tạo lớp, nhập danh sách học sinh, tạo hồ sơ giáo viên và phân công; câu hỏi được tạo trong mục **Câu hỏi & đề** hoặc nhập từ CSV.
 
 Ở môi trường Development, các nhóm tính năng đã được bật trong `Harmonia.Web/appsettings.Development.json`. Gợi ý nhận xét bằng Gemini mặc định tắt (bật bằng `Gemini:Enabled` và khóa API khai báo qua User Secrets). Ứng dụng không tự migrate hay tạo dữ liệu khi khởi động.
 

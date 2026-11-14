@@ -3,6 +3,7 @@
 | Tệp | Nội dung |
 |---|---|
 | [`schema.sql`](schema.sql) | Lược đồ đầy đủ 34 bảng (25 bảng `public` + 9 bảng `auth`), 263 cột, 53 khóa ngoại, ràng buộc CHECK / UNIQUE / EXCLUDE và chỉ mục. Không chứa dữ liệu. |
+| [`seed_demo.sql`](seed_demo.sql) | Dữ liệu mô phỏng để chạy thử (không có dữ liệu học sinh thật, không kèm tài khoản). Chạy sau `schema.sql`. |
 | [`ERD.md`](ERD.md) | ERD dạng cây theo 6 nhóm bảng và bảng tổng hợp 53 quan hệ. |
 | [`../docs/03-thiet-ke/so-do/erd/`](../docs/03-thiet-ke/so-do/erd/) | ERD chi tiết dạng hình (Crow's Foot). |
 | [`../docs/03-thiet-ke/tu-dien-du-lieu.md`](../docs/03-thiet-ke/tu-dien-du-lieu.md) | Từ điển dữ liệu từng cột. |
